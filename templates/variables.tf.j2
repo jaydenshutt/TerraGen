@@ -1,0 +1,50 @@
+variable "project" {variable "region" {
+
+  description = "A name for the project, used to prefix resource names."  type = string
+
+  type        = string  default = "{{ region }}"
+
+}}
+
+
+
+variable "cloud" {variable "project" {
+
+  description = "The cloud provider to use."  type = string
+
+  type        = string  default = "{{ project }}"
+
+}}
+
+
+
+variable "region" {
+  description = "The region to deploy resources into."
+  type        = string
+}
+
+variable "vpc_cidr" {
+  description = "The CIDR block for the Virtual Private Cloud (VPC)."
+  type        = string
+}
+
+variable "az_count" {
+  description = "The number of availability zones to use."
+  type        = number
+}
+
+variable "public_subnets" {
+  description = "A list of CIDR blocks for public subnets."
+  type        = list(string)
+}
+
+variable "private_subnets" {
+  description = "A list of CIDR blocks for private subnets."
+  type        = list(string)
+}
+
+variable "tags" {
+  description = "A map of tags to apply to all taggable resources."
+  type        = map(string)
+  default     = {}
+}

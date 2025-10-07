@@ -1,0 +1,29 @@
+terraform {terraform {
+
+{% if cloud == 'aws' %}  backend "s3" {
+
+  backend "s3" {    bucket = "{{ project }}-tfstate"
+
+    bucket         = "{{ project }}-tfstate"    key    = "terraform.tfstate"
+
+    key            = "terraform.tfstate"    region = "{{ region }}"
+
+    region         = "{{ region }}"  }
+
+    dynamodb_table = "{{ project }}-tf-lock"}
+
+  }
+{% elif cloud == 'gcp' %}
+  backend "gcs" {
+    bucket = "{{ project }}-tfstate"
+    prefix = "terraform/state"
+  }
+{% elif cloud == 'azure' %}
+  backend "azurerm" {
+    resource_group_name  = "{{ project }}-tf-state-rg"
+    storage_account_name = "{{ project | lower | replace('-', '') }}tfstate"
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
+  }
+{% endif %}
+}

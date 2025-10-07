@@ -1,0 +1,43 @@
+output "vpc_id" {output "vpc_id" {
+
+  description = "The ID of the created VPC or VNet."  value = aws_vpc.main.id
+
+{% if cloud == 'aws' %}}
+
+  value       = aws_vpc.main.id
+
+{% elif cloud == 'gcp' %}output "public_subnet_cidrs" {
+
+  value       = google_compute_network.main.id  value = {{ public_subnets | tojson }}
+
+{% elif cloud == 'azure' %}}
+
+  value       = azurerm_virtual_network.main.id
+
+{% endif %}output "private_subnet_cidrs" {
+
+}  value = {{ private_subnets | tojson }}
+
+}
+
+output "public_subnet_ids" {
+  description = "The IDs of the public subnets."
+{% if cloud == 'aws' %}
+  value       = aws_subnet.public[*].id
+{% elif cloud == 'gcp' %}
+  value       = google_compute_subnetwork.public[*].id
+{% elif cloud == 'azure' %}
+  value       = azurerm_subnet.public[*].id
+{% endif %}
+}
+
+output "private_subnet_ids" {
+  description = "The IDs of the private subnets."
+{% if cloud == 'aws' %}
+  value       = aws_subnet.private[*].id
+{% elif cloud == 'gcp' %}
+  value       = google_compute_subnetwork.private[*].id
+{% elif cloud == 'azure' %}
+  value       = azurerm_subnet.private[*].id
+{% endif %}
+}
