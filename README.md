@@ -26,7 +26,7 @@ Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 
 - **Multi-cloud**: AWS, GCP, Azure with real resource parity (not stubs)
 - **Layouts**: `flat` (single root) or `modular` (`modules/network` + `envs/{dev,prod}`)
-- **Blueprints**: `network`, `network-ha`, `network-secure`
+- **Blueprints**: `network`, `network-ha`, `network-secure`, `network-private`, `network-3tier`, `eks-ready`, `gke-ready`, `aks-ready`
 - **Private-only**: no NAT/public subnets + AWS interface endpoint pack (SSM, ECR, logs, …)
 - **Interactive & non-interactive**: prompts or `--answers` JSON/YAML
 - **Smart CIDR planning**: auto public/private subnets per AZ (or bring your own)
