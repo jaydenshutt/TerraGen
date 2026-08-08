@@ -1,0 +1,14 @@
+# TerraGen sample — Azure VNet + NAT Gateway
+project: demo-azure
+cloud: azure
+region: eastus
+environment: dev
+blueprint: network-ha
+vpc_cidr: 10.40.0.0/16
+az_count: 2
+nat_mode: per_az
+enable_flow_logs: true
+enable_nsg_defaults: true
+enable_backend: true
+enable_bootstrap: true
+owner: platform-team

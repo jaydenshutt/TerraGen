@@ -1,0 +1,61 @@
+# -----------------------------------------------------------------------------
+# AWS Security — baseline SG, optional bastion, default NACL hygiene
+# -----------------------------------------------------------------------------
+
+resource "aws_security_group" "app" {
+  name        = "${local.name_prefix}-app-sg"
+  description = "Baseline application security group — deny-by-default ingress"
+  vpc_id      = aws_vpc.main.id
+
+  # Allow all traffic within the SG (east-west app traffic)
+  ingress {
+    description = "Intra-SG traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  egress {
+    description = "Allow all outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.tags, {
+    Name = "${local.name_prefix}-app-sg"
+  })
+}
+
+resource "aws_security_group" "bastion" {
+  count = var.enable_bastion_sg ? 1 : 0
+
+  name        = "${local.name_prefix}-bastion-sg"
+  description = "Management access (SSH). Restrict ssh_cidrs for production."
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = var.ssh_cidrs
+  }
+
+  egress {
+    description = "Allow all outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.tags, {
+    Name = "${local.name_prefix}-bastion-sg"
+  })
+}
+
+# Explicit default network ACL association remains; VPC default NACL allows all.
+# For stricter blueprints, optional dedicated NACLs can be added later.

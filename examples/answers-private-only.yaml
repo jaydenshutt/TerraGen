@@ -1,0 +1,17 @@
+# Private-only AWS network — no NAT, no public subnets, full endpoint pack
+project: demo-private
+cloud: aws
+region: us-east-1
+environment: prod
+blueprint: network
+private_only: true
+vpc_cidr: 10.70.0.0/16
+az_count: 2
+enable_flow_logs: true
+enable_backend: true
+enable_bootstrap: true
+generate_ci: true
+generate_oidc: true
+github_org: my-org
+github_repo: my-infra
+owner: platform-team

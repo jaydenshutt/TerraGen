@@ -1,0 +1,69 @@
+# -----------------------------------------------------------------------------
+# GitHub Actions → GCP Workload Identity Federation
+# Prerequisites: enable IAM Credentials API; set gcp_project_id correctly.
+# -----------------------------------------------------------------------------
+
+terraform {
+  required_version = "{{ terraform_version }}"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "{{ provider_version_gcp }}"
+    }
+  }
+}
+
+provider "google" {
+  project = "{{ gcp_project }}"
+  region  = "{{ region }}"
+}
+
+resource "google_iam_workload_identity_pool" "github" {
+  workload_identity_pool_id = "{{ project }}-gha-pool"
+  display_name              = "GitHub Actions pool"
+  description               = "TerraGen OIDC pool for GitHub Actions"
+}
+
+resource "google_iam_workload_identity_pool_provider" "github" {
+  workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
+  workload_identity_pool_provider_id = "github-provider"
+  display_name                       = "GitHub provider"
+
+  attribute_mapping = {
+    "google.subject"       = "assertion.sub"
+    "attribute.actor"      = "assertion.actor"
+    "attribute.repository" = "assertion.repository"
+  }
+
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
+  }
+
+  attribute_condition = "assertion.repository == '{{ github_repository }}'"
+}
+
+resource "google_service_account" "gha" {
+  account_id   = "{{ project }}-gha"
+  display_name = "GitHub Actions Terraform"
+}
+
+resource "google_service_account_iam_member" "wif" {
+  service_account_id = google_service_account.gha.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/{{ github_repository }}"
+}
+
+resource "google_project_iam_member" "editor" {
+  project = "{{ gcp_project }}"
+  role    = "roles/editor"
+  member  = "serviceAccount:${google_service_account.gha.email}"
+}
+
+output "service_account_email" {
+  value = google_service_account.gha.email
+}
+
+output "workload_identity_provider" {
+  description = "Set as GitHub secret GCP_WORKLOAD_IDENTITY_PROVIDER"
+  value       = google_iam_workload_identity_pool_provider.github.name
+}

@@ -1,0 +1,39 @@
+# TFLint configuration for TerraGen projects
+# https://github.com/terraform-linters/tflint
+
+config {
+  call_module_type = "local"
+  force            = false
+}
+
+{% if cloud == "aws" %}
+plugin "aws" {
+  enabled = true
+  version = "0.32.0"
+  source  = "github.com/terraform-linters/tflint-ruleset-aws"
+}
+{% elif cloud == "gcp" %}
+plugin "google" {
+  enabled = true
+  version = "0.30.0"
+  source  = "github.com/terraform-linters/tflint-ruleset-google"
+}
+{% elif cloud == "azure" %}
+plugin "azurerm" {
+  enabled = true
+  version = "0.27.0"
+  source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
+}
+{% endif %}
+
+rule "terraform_unused_declarations" {
+  enabled = true
+}
+
+rule "terraform_deprecated_index" {
+  enabled = true
+}
+
+rule "terraform_naming_convention" {
+  enabled = true
+}

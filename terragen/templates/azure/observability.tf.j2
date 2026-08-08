@@ -1,0 +1,23 @@
+# -----------------------------------------------------------------------------
+# Azure Observability — NSG flow logs require a storage account / Log Analytics
+# -----------------------------------------------------------------------------
+
+{% if enable_flow_logs %}
+# Full NSG flow log setup needs a storage account or Log Analytics workspace.
+# Scaffolding is provided as comments so you can enable once retention backends exist.
+
+# resource "azurerm_storage_account" "flow" {
+#   name                     = replace("${local.name_prefix}flow", "-", "")
+#   resource_group_name      = azurerm_resource_group.main.name
+#   location                 = azurerm_resource_group.main.location
+#   account_tier             = "Standard"
+#   account_replication_type = "LRS"
+#   min_tls_version          = "TLS1_2"
+#   tags                     = var.tags
+# }
+{% endif %}
+
+{% if enable_billing_alerts %}
+# Azure cost alerts are typically configured via Cost Management budgets
+# at the subscription/management-group scope with appropriate RBAC.
+{% endif %}

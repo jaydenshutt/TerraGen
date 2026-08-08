@@ -1,0 +1,116 @@
+# -----------------------------------------------------------------------------
+# Azure Security — Network Security Groups with safe defaults
+# -----------------------------------------------------------------------------
+
+resource "azurerm_network_security_group" "public" {
+  count = var.enable_nsg_defaults ? 1 : 0
+
+  name                = "${local.name_prefix}-public-nsg"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = var.tags
+
+  security_rule {
+    name                       = "AllowVNetInbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowAzureLoadBalancer"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "AzureLoadBalancer"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "DenyAllInbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+resource "azurerm_network_security_group" "private" {
+  count = var.enable_nsg_defaults ? 1 : 0
+
+  name                = "${local.name_prefix}-private-nsg"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = var.tags
+
+  security_rule {
+    name                       = "AllowVNetInbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "DenyAllInbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "public" {
+  count = var.enable_nsg_defaults && var.create_public_subnets ? length(azurerm_subnet.public) : 0
+
+  subnet_id                 = azurerm_subnet.public[count.index].id
+  network_security_group_id = azurerm_network_security_group.public[0].id
+}
+
+resource "azurerm_subnet_network_security_group_association" "private" {
+  count = var.enable_nsg_defaults ? var.az_count : 0
+
+  subnet_id                 = azurerm_subnet.private[count.index].id
+  network_security_group_id = azurerm_network_security_group.private[0].id
+}
+
+resource "azurerm_network_security_group" "bastion" {
+  count = var.enable_bastion_sg ? 1 : 0
+
+  name                = "${local.name_prefix}-bastion-nsg"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = var.tags
+
+  security_rule {
+    name                       = "AllowSSH"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefixes    = var.ssh_cidrs
+    destination_address_prefix = "*"
+  }
+}

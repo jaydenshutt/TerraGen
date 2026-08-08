@@ -1,0 +1,162 @@
+{% if cloud == "aws" %}
+output "vpc_id" {
+  description = "ID of the VPC."
+  value       = aws_vpc.main.id
+}
+
+output "vpc_cidr" {
+  description = "CIDR block of the VPC."
+  value       = aws_vpc.main.cidr_block
+}
+
+output "public_subnet_ids" {
+  description = "IDs of public subnets."
+  value       = aws_subnet.public[*].id
+}
+
+output "private_subnet_ids" {
+  description = "IDs of private subnets."
+  value       = aws_subnet.private[*].id
+}
+
+output "isolated_subnet_ids" {
+  description = "IDs of isolated/data-tier subnets (empty if disabled)."
+  value       = try(aws_subnet.isolated[*].id, [])
+}
+
+output "public_subnet_cidrs" {
+  description = "CIDR blocks of public subnets."
+  value       = aws_subnet.public[*].cidr_block
+}
+
+output "private_subnet_cidrs" {
+  description = "CIDR blocks of private subnets."
+  value       = aws_subnet.private[*].cidr_block
+}
+
+output "internet_gateway_id" {
+  description = "Internet Gateway ID (null when public subnets disabled)."
+  value       = try(aws_internet_gateway.main[0].id, null)
+}
+
+output "nat_gateway_ids" {
+  description = "NAT Gateway IDs (empty when nat_mode=none)."
+  value       = try(aws_nat_gateway.main[*].id, [])
+}
+
+output "public_route_table_id" {
+  description = "Public route table ID (null when no public subnets)."
+  value       = try(aws_route_table.public[0].id, null)
+}
+
+output "private_route_table_ids" {
+  description = "Private route table IDs."
+  value       = aws_route_table.private[*].id
+}
+
+output "default_security_group_id" {
+  description = "Baseline application security group ID."
+  value       = aws_security_group.app.id
+}
+
+output "interface_endpoint_ids" {
+  description = "Map of interface VPC endpoint IDs."
+  value       = try({ for k, v in aws_vpc_endpoint.interface : k => v.id }, {})
+}
+
+{% if enable_bastion_sg %}
+output "bastion_security_group_id" {
+  description = "Bastion / management security group ID."
+  value       = aws_security_group.bastion[0].id
+}
+{% endif %}
+
+{% elif cloud == "gcp" %}
+output "network_id" {
+  description = "Self-link of the VPC network."
+  value       = google_compute_network.main.id
+}
+
+output "network_name" {
+  description = "Name of the VPC network."
+  value       = google_compute_network.main.name
+}
+
+output "public_subnet_ids" {
+  description = "Self-links of public subnets."
+  value       = google_compute_subnetwork.public[*].id
+}
+
+output "private_subnet_ids" {
+  description = "Self-links of private subnets."
+  value       = google_compute_subnetwork.private[*].id
+}
+
+output "public_subnet_cidrs" {
+  description = "CIDR ranges of public subnets."
+  value       = google_compute_subnetwork.public[*].ip_cidr_range
+}
+
+output "private_subnet_cidrs" {
+  description = "CIDR ranges of private subnets."
+  value       = google_compute_subnetwork.private[*].ip_cidr_range
+}
+
+output "nat_name" {
+  description = "Cloud NAT name when enabled."
+  value       = try(google_compute_router_nat.main[0].name, null)
+}
+
+{% elif cloud == "azure" %}
+output "resource_group_name" {
+  description = "Resource group name."
+  value       = azurerm_resource_group.main.name
+}
+
+output "vnet_id" {
+  description = "Virtual network ID."
+  value       = azurerm_virtual_network.main.id
+}
+
+output "vnet_name" {
+  description = "Virtual network name."
+  value       = azurerm_virtual_network.main.name
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs."
+  value       = azurerm_subnet.public[*].id
+}
+
+output "private_subnet_ids" {
+  description = "Private subnet IDs."
+  value       = azurerm_subnet.private[*].id
+}
+
+output "public_subnet_cidrs" {
+  description = "Public subnet address prefixes."
+  value       = [for s in azurerm_subnet.public : s.address_prefixes[0]]
+}
+
+output "private_subnet_cidrs" {
+  description = "Private subnet address prefixes."
+  value       = [for s in azurerm_subnet.private : s.address_prefixes[0]]
+}
+
+output "nat_gateway_ids" {
+  description = "NAT Gateway IDs when enabled."
+  value       = try(azurerm_nat_gateway.main[*].id, [])
+}
+{% endif %}
+
+output "terragen_metadata" {
+  description = "Metadata about how this project was generated."
+  value = {
+    project     = var.project
+    environment = var.environment
+    cloud       = {{ cloud | tojson }}
+    blueprint   = {{ blueprint | tojson }}
+    region      = var.region
+    nat_mode    = var.nat_mode
+  }
+}

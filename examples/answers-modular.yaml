@@ -1,0 +1,24 @@
+# Modular layout: reusable module + multi-env roots
+project: demo-modular
+cloud: aws
+region: us-east-1
+environment: dev
+layout: modular
+environments:
+  - dev
+  - staging
+  - prod
+blueprint: network-ha
+vpc_cidr: 10.60.0.0/16
+az_count: 2
+nat_mode: per_az
+enable_flow_logs: true
+enable_vpc_endpoints: true
+enable_interface_endpoints: true
+github_org: my-org
+github_repo: my-infra
+enable_backend: true
+enable_bootstrap: true
+generate_ci: true
+generate_oidc: true
+owner: platform-team

@@ -1,0 +1,11 @@
+project: demo-3tier
+cloud: aws
+region: us-east-1
+environment: dev
+blueprint: network-3tier
+vpc_cidr: 10.80.0.0/16
+az_count: 2
+nat_mode: single
+enable_flow_logs: true
+enable_vpc_endpoints: true
+owner: platform-team

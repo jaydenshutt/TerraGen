@@ -1,0 +1,172 @@
+variable "project" {
+  description = "Project name used to prefix resources."
+  type        = string
+  default     = {{ project | tf }}
+}
+
+variable "environment" {
+  description = "Deployment environment (dev, staging, prod, shared)."
+  type        = string
+  default     = {{ environment | tf }}
+}
+
+variable "region" {
+  description = "Cloud region or Azure location."
+  type        = string
+  default     = {{ region | tf }}
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC / VNet."
+  type        = string
+  default     = {{ vpc_cidr | tf }}
+}
+
+variable "az_count" {
+  description = "Number of availability zones (or subnet replicas)."
+  type        = number
+  default     = {{ az_count }}
+}
+
+variable "public_subnets" {
+  description = "Public subnet CIDR blocks (one per AZ)."
+  type        = list(string)
+  default     = {{ public_subnets | tf }}
+}
+
+variable "private_subnets" {
+  description = "Private subnet CIDR blocks (one per AZ)."
+  type        = list(string)
+  default     = {{ private_subnets | tf }}
+}
+
+variable "isolated_subnets" {
+  description = "Isolated/data-tier subnet CIDRs (one per AZ). Empty unless 3-tier."
+  type        = list(string)
+  default     = {{ isolated_subnets | tf }}
+}
+
+variable "enable_isolated_subnets" {
+  description = "Create isolated data-tier subnets with no internet route."
+  type        = bool
+  default     = {{ enable_isolated_subnets | tf }}
+}
+
+variable "enable_eks_subnet_tags" {
+  description = "Apply kubernetes.io/role ELB tags on public/private subnets (AWS)."
+  type        = bool
+  default     = {{ enable_eks_subnet_tags | tf }}
+}
+
+variable "enable_gke_secondary_ranges" {
+  description = "Attach GKE pod/service secondary ranges on private subnets (GCP)."
+  type        = bool
+  default     = {{ enable_gke_secondary_ranges | tf }}
+}
+
+variable "gke_pod_cidrs" {
+  description = "Secondary CIDRs for GKE pods (one per AZ)."
+  type        = list(string)
+  default     = {{ gke_pod_cidrs | tf }}
+}
+
+variable "gke_service_cidrs" {
+  description = "Secondary CIDRs for GKE services (one per AZ)."
+  type        = list(string)
+  default     = {{ gke_service_cidrs | tf }}
+}
+
+variable "nat_mode" {
+  description = "NAT strategy: none | single | per_az"
+  type        = string
+  default     = {{ nat_mode | tf }}
+
+  validation {
+    condition     = contains(["none", "single", "per_az"], var.nat_mode)
+    error_message = "nat_mode must be one of: none, single, per_az."
+  }
+}
+
+variable "enable_flow_logs" {
+  description = "Enable network flow logs."
+  type        = bool
+  default     = {{ enable_flow_logs | tf }}
+}
+
+variable "enable_vpc_endpoints" {
+  description = "Enable gateway endpoints for object storage where supported."
+  type        = bool
+  default     = {{ enable_vpc_endpoints | tf }}
+}
+
+variable "enable_interface_endpoints" {
+  description = "Enable AWS interface VPC endpoints (SSM, ECR, logs, etc.)."
+  type        = bool
+  default     = {{ enable_interface_endpoints | tf }}
+}
+
+variable "interface_endpoints" {
+  description = "AWS interface endpoint service suffixes (e.g. ssm, ecr.api)."
+  type        = list(string)
+  default     = {{ interface_endpoints | tf }}
+}
+
+variable "create_public_subnets" {
+  description = "Create public subnets and internet gateway. Set false for private-only."
+  type        = bool
+  default     = {{ create_public_subnets | tf }}
+}
+
+variable "enable_bastion_sg" {
+  description = "Create a bastion / management security group or firewall rule."
+  type        = bool
+  default     = {{ enable_bastion_sg | tf }}
+}
+
+variable "enable_nsg_defaults" {
+  description = "Create default NSG / firewall baseline rules (Azure / multi-cloud)."
+  type        = bool
+  default     = {{ enable_nsg_defaults | tf }}
+}
+
+variable "ssh_cidrs" {
+  description = "CIDR blocks allowed for SSH/RDP management access."
+  type        = list(string)
+  default     = {{ ssh_cidrs | tf }}
+}
+
+variable "tags" {
+  description = "Tags / labels applied to supported resources."
+  type        = map(string)
+  default     = {{ tags | tf }}
+}
+
+{% if cloud == "gcp" %}
+variable "gcp_project_id" {
+  description = "GCP project ID (billing project)."
+  type        = string
+  default     = {{ gcp_project | tf }}
+}
+{% endif %}
+
+{% if cloud == "azure" %}
+variable "azure_subscription_id" {
+  description = "Optional Azure subscription ID."
+  type        = string
+  default     = {{ azure_subscription_id | tf }}
+}
+{% endif %}
+
+{% if enable_billing_alerts %}
+variable "billing_thresholds" {
+  description = "Billing alert thresholds (USD) keyed by severity."
+  type        = map(number)
+  default     = {{ billing_thresholds | tf }}
+}
+
+variable "alert_emails" {
+  description = "Email addresses for billing / security notifications."
+  type        = list(string)
+  default     = {{ alert_emails | tf }}
+}
+{% endif %}

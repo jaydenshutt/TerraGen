@@ -1,0 +1,48 @@
+# OIDC / federated CI authentication
+
+This folder provisions cloud identity so **GitHub Actions** can run Terraform
+**without long-lived access keys**.
+
+## Target repository
+
+`{{ github_repository }}`
+
+If you see `ORG/REPO`, re-generate with:
+
+```yaml
+github_org: my-org
+github_repo: my-infra-repo
+```
+
+## Apply
+
+```bash
+cd oidc
+terraform init
+terraform plan
+terraform apply
+```
+
+Capture outputs and add them as GitHub repository secrets / variables (see
+`.github/workflows/terraform.yml`).
+
+## Cloud notes
+
+{% if cloud == "aws" %}
+- Creates GitHub OIDC provider + IAM role `{{ project }}-gha-terraform`
+- Output `role_arn` → secret `AWS_ROLE_ARN`
+- Thumbprint is a placeholder pattern; confirm current GitHub OIDC thumbprints
+  if your org requires pinned digests
+{% elif cloud == "gcp" %}
+- Creates Workload Identity pool/provider + service account
+- Outputs → `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`
+{% elif cloud == "azure" %}
+- Creates App Registration + federated credential for `main` branch
+- Outputs → `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`
+{% endif %}
+
+## Least privilege
+
+The attached roles (`PowerUserAccess` / `roles/editor` / `Contributor`) are
+**starting points**. Replace with custom policies limited to this network stack
+before production.

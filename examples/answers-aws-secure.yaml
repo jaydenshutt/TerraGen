@@ -1,0 +1,25 @@
+# TerraGen sample — AWS secure / HA network
+project: demo-aws-secure
+cloud: aws
+region: us-west-2
+environment: prod
+blueprint: network-secure
+vpc_cidr: 10.20.0.0/16
+az_count: 3
+nat_mode: per_az
+enable_flow_logs: true
+enable_vpc_endpoints: true
+enable_bastion_sg: true
+ssh_cidrs:
+  - 10.0.0.0/8
+  - 192.168.0.0/16
+enable_guardduty: true
+enable_billing_alerts: true
+billing_thresholds:
+  low: 100
+  medium: 500
+  high: 1500
+alert_emails:
+  - platform-alerts@example.com
+owner: security-team
+cost_center: eng-infra

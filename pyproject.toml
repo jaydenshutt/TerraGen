@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "terragen"
+version = "2.2.0"
+description = "World-class multi-cloud Terraform network generator (AWS, GCP, Azure)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Jayden Shutt" }]
+keywords = ["terraform", "aws", "gcp", "azure", "iac", "multi-cloud", "vpc"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: System :: Systems Administration",
+  "Topic :: Software Development :: Code Generators",
+]
+dependencies = [
+  "Jinja2>=3.1",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "pytest-cov>=4.0",
+]
+
+[project.scripts]
+terragen = "terragen.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/jaydenshutt/TerraGen"
+Repository = "https://github.com/jaydenshutt/TerraGen"
+Issues = "https://github.com/jaydenshutt/TerraGen/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["terragen*"]
+
+[tool.setuptools.package-data]
+terragen = ["templates/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

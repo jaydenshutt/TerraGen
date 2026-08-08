@@ -1,0 +1,59 @@
+# -----------------------------------------------------------------------------
+# GCP Security — baseline firewall rules (deny-by-default ingress)
+# -----------------------------------------------------------------------------
+
+resource "google_compute_firewall" "allow_internal" {
+  name    = "${local.name_prefix}-allow-internal"
+  network = google_compute_network.main.name
+
+  description = "Allow all traffic within the VPC CIDR"
+  direction   = "INGRESS"
+  priority    = 65534
+
+  allow {
+    protocol = "tcp"
+  }
+  allow {
+    protocol = "udp"
+  }
+  allow {
+    protocol = "icmp"
+  }
+
+  source_ranges = [var.vpc_cidr]
+}
+
+resource "google_compute_firewall" "allow_iap_ssh" {
+  count = var.enable_bastion_sg ? 1 : 0
+
+  name    = "${local.name_prefix}-allow-iap-ssh"
+  network = google_compute_network.main.name
+
+  description = "Allow SSH via IAP (preferred) and optional admin CIDRs"
+  direction   = "INGRESS"
+  priority    = 1000
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  # IAP TCP forwarding range + user-provided admin CIDRs
+  source_ranges = distinct(concat(["35.235.240.0/20"], var.ssh_cidrs))
+  target_tags   = ["bastion", "allow-ssh"]
+}
+
+resource "google_compute_firewall" "deny_all_ingress" {
+  name    = "${local.name_prefix}-deny-all-ingress"
+  network = google_compute_network.main.name
+
+  description = "Explicit low-priority deny for documentation / defense in depth"
+  direction   = "INGRESS"
+  priority    = 65535
+
+  deny {
+    protocol = "all"
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+}

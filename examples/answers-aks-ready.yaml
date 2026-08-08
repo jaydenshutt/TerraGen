@@ -1,0 +1,8 @@
+project: demo-aks
+cloud: azure
+region: eastus
+environment: dev
+blueprint: aks-ready
+vpc_cidr: 10.110.0.0/16
+az_count: 2
+owner: platform-team

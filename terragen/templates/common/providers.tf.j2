@@ -1,0 +1,21 @@
+{% if cloud == "aws" %}
+provider "aws" {
+  region = var.region
+
+  default_tags {
+    tags = var.tags
+  }
+}
+{% elif cloud == "gcp" %}
+provider "google" {
+  project = var.gcp_project_id
+  region  = var.region
+}
+{% elif cloud == "azure" %}
+provider "azurerm" {
+  features {}
+{% if azure_subscription_id %}
+  subscription_id = var.azure_subscription_id
+{% endif %}
+}
+{% endif %}

@@ -1,0 +1,42 @@
+# Remote State Bootstrap
+
+This folder provisions the backend resources required by `../backend.tf`.
+
+## Why a separate stack?
+
+Terraform cannot store state in a backend that does not exist yet. Apply this
+bootstrap **once** with local state, then initialize the parent project against
+the remote backend.
+
+## Steps
+
+```bash
+cd bootstrap
+terraform init
+terraform plan
+terraform apply
+cd ..
+terraform init -migrate-state   # or first-time init
+```
+
+## What gets created
+
+{% if cloud == "aws" %}
+- S3 bucket `{{ state_bucket_name }}` (versioned, encrypted, public access blocked)
+- DynamoDB table `{{ state_lock_table }}` for state locking
+{% elif cloud == "gcp" %}
+- GCS bucket `{{ state_bucket_name }}` (versioned, uniform access)
+{% elif cloud == "azure" %}
+- Resource group `{{ project }}-{{ environment }}-tfstate-rg`
+- Storage account `{{ azure_storage_account }}`
+- Blob container `tfstate`
+{% endif %}
+
+## Teardown
+
+Destroy the **network** stack first (parent directory), then:
+
+```bash
+cd bootstrap
+terraform destroy
+```

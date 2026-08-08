@@ -1,0 +1,13 @@
+{
+  "project": "demo-json",
+  "cloud": "aws",
+  "region": "eu-west-1",
+  "environment": "staging",
+  "blueprint": "network",
+  "vpc_cidr": "10.50.0.0/16",
+  "az_count": 2,
+  "nat_mode": "single",
+  "enable_flow_logs": true,
+  "enable_backend": true,
+  "enable_bootstrap": true
+}

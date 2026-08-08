@@ -1,0 +1,41 @@
+# Snapshot of TerraGen answers used to generate this project.
+# Re-run: terragen generate --answers terragen.answers.yaml --out .
+project: {{ project }}
+cloud: {{ cloud }}
+region: {{ region }}
+environment: {{ environment }}
+blueprint: {{ blueprint }}
+vpc_cidr: {{ vpc_cidr }}
+az_count: {{ az_count }}
+public_subnets: {{ public_subnets | tojson }}
+private_subnets: {{ private_subnets | tojson }}
+layout: {{ layout }}
+environments: {{ env_list | tojson }}
+nat_mode: {{ nat_mode }}
+create_public_subnets: {{ create_public_subnets | tojson }}
+enable_flow_logs: {{ enable_flow_logs | tojson }}
+enable_vpc_endpoints: {{ enable_vpc_endpoints | tojson }}
+enable_interface_endpoints: {{ enable_interface_endpoints | tojson }}
+interface_endpoints: {{ interface_endpoints | tojson }}
+enable_bastion_sg: {{ enable_bastion_sg | tojson }}
+ssh_cidrs: {{ ssh_cidrs | tojson }}
+enable_guardduty: {{ enable_guardduty | tojson }}
+enable_billing_alerts: {{ enable_billing_alerts | tojson }}
+billing_thresholds: {{ billing_thresholds | tojson }}
+alert_emails: {{ alert_emails | tojson }}
+enable_backend: {{ enable_backend | tojson }}
+enable_bootstrap: {{ enable_bootstrap | tojson }}
+generate_ci: {{ generate_ci | tojson }}
+generate_policies: {{ generate_policies | tojson }}
+generate_oidc: {{ generate_oidc | tojson }}
+github_org: {{ github_org | tojson }}
+github_repo: {{ github_repo | tojson }}
+owner: {{ owner | tojson }}
+cost_center: {{ cost_center | tojson }}
+{% if cloud == "gcp" %}
+gcp_project_id: {{ gcp_project | tojson }}
+{% endif %}
+{% if cloud == "azure" %}
+azure_subscription_id: {{ azure_subscription_id | tojson }}
+{% endif %}
+tags: {{ tags | tojson }}

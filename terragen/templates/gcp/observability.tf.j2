@@ -1,0 +1,33 @@
+# -----------------------------------------------------------------------------
+# GCP Observability — logging notes (flow logs configured on subnets)
+# -----------------------------------------------------------------------------
+
+# VPC flow logs are enabled via google_compute_subnetwork.log_config when
+# enable_flow_logs is true (see network.tf).
+#
+# For organization-level Security Command Center, configure outside this stack
+# with appropriate IAM — SCC is not a simple single-resource enablement.
+
+{% if enable_billing_alerts and alert_emails %}
+# Budget alerts require billing account permissions and are often managed at
+# org/folder level. This resource is a template — set billing_account before apply.
+
+# resource "google_billing_budget" "main" {
+#   billing_account = "BILLING_ACCOUNT_ID"
+#   display_name    = "${local.name_prefix}-budget"
+#
+#   amount {
+#     specified_amount {
+#       currency_code = "USD"
+#       units         = "500"
+#     }
+#   }
+#
+#   threshold_rules {
+#     threshold_percent = 0.5
+#   }
+#   threshold_rules {
+#     threshold_percent = 0.9
+#   }
+# }
+{% endif %}

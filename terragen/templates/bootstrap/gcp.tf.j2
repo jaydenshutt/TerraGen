@@ -1,0 +1,40 @@
+# -----------------------------------------------------------------------------
+# Bootstrap stack — GCS bucket for Terraform remote state
+# Prerequisites: gcloud auth, billing project "{{ gcp_project }}"
+# -----------------------------------------------------------------------------
+
+terraform {
+  required_version = "{{ terraform_version }}"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "{{ provider_version_gcp }}"
+    }
+  }
+}
+
+provider "google" {
+  project = "{{ gcp_project }}"
+  region  = "{{ region }}"
+}
+
+resource "google_storage_bucket" "tfstate" {
+  name                        = "{{ state_bucket_name }}"
+  location                    = upper("{{ region }}")
+  force_destroy               = false
+  uniform_bucket_level_access = true
+  versioning {
+    enabled = true
+  }
+
+  labels = {
+    project     = "{{ project }}"
+    environment = "{{ environment }}"
+    managed_by  = "terragen"
+    purpose     = "terraform-state"
+  }
+}
+
+output "state_bucket" {
+  value = google_storage_bucket.tfstate.name
+}

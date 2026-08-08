@@ -1,0 +1,64 @@
+# -----------------------------------------------------------------------------
+# GitHub Actions → Azure AD federated credentials (OIDC)
+# Create an app registration + service principal, then federate GitHub.
+# -----------------------------------------------------------------------------
+
+terraform {
+  required_version = "{{ terraform_version }}"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "{{ provider_version_azure }}"
+    }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 2.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
+provider "azuread" {}
+
+data "azurerm_subscription" "current" {}
+
+resource "azuread_application" "gha" {
+  display_name = "{{ project }}-gha-terraform"
+}
+
+resource "azuread_service_principal" "gha" {
+  client_id = azuread_application.gha.client_id
+}
+
+resource "azuread_application_federated_identity_credential" "gha" {
+  application_id = azuread_application.gha.id
+  display_name   = "github-actions"
+  description    = "GitHub Actions OIDC for {{ github_repository }}"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:{{ github_repository }}:ref:refs/heads/main"
+}
+
+resource "azurerm_role_assignment" "gha_contributor" {
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = "Contributor"
+  principal_id         = azuread_service_principal.gha.object_id
+}
+
+output "client_id" {
+  description = "Set as GitHub secret AZURE_CLIENT_ID"
+  value       = azuread_application.gha.client_id
+}
+
+output "tenant_id" {
+  description = "Set as GitHub secret AZURE_TENANT_ID"
+  value       = data.azurerm_subscription.current.tenant_id
+}
+
+output "subscription_id" {
+  description = "Set as GitHub secret AZURE_SUBSCRIPTION_ID"
+  value       = data.azurerm_subscription.current.subscription_id
+}

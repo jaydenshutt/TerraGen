@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Generated local test projects
+*-terraform/
+/out/
+/tmp-gen/
+tmp-gen/
+tmp-mod/
+tmp-*/
+/test-output/
+samplecloud-*/
+
+# Build artifacts
+*.egg-info/
+
+# Terraform (if running locally against examples)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan

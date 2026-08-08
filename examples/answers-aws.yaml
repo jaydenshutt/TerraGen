@@ -1,0 +1,19 @@
+# TerraGen sample — AWS network foundation
+project: demo-aws
+cloud: aws
+region: us-east-1
+environment: dev
+blueprint: network
+vpc_cidr: 10.10.0.0/16
+az_count: 2
+nat_mode: single
+enable_flow_logs: true
+enable_vpc_endpoints: false
+enable_bastion_sg: false
+enable_backend: true
+enable_bootstrap: true
+generate_ci: true
+generate_policies: true
+owner: platform-team
+tags:
+  Team: platform

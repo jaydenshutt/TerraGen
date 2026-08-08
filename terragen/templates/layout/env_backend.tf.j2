@@ -1,0 +1,25 @@
+# Remote state for environment: {{ environment }}
+
+terraform {
+{% if cloud == "aws" %}
+  backend "s3" {
+    bucket         = "{{ state_bucket_name }}"
+    key            = "{{ environment }}/network/terraform.tfstate"
+    region         = "{{ region }}"
+    dynamodb_table = "{{ state_lock_table }}"
+    encrypt        = true
+  }
+{% elif cloud == "gcp" %}
+  backend "gcs" {
+    bucket = "{{ state_bucket_name }}"
+    prefix = "{{ environment }}/network"
+  }
+{% elif cloud == "azure" %}
+  backend "azurerm" {
+    resource_group_name  = "{{ project }}-{{ environment }}-tfstate-rg"
+    storage_account_name = "{{ azure_storage_account }}"
+    container_name       = "tfstate"
+    key                  = "{{ environment }}/network.tfstate"
+  }
+{% endif %}
+}

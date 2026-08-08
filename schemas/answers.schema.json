@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jaydenshutt/TerraGen/schemas/answers.schema.json",
+  "title": "TerraGen Answers",
+  "description": "Configuration for generating a multi-cloud Terraform network project. Prefer: terragen schema -o answers.schema.json",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "project": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,38}[a-z0-9]$"
+    },
+    "cloud": {
+      "type": "string",
+      "enum": ["aws", "gcp", "azure"]
+    },
+    "region": { "type": "string" },
+    "environment": { "type": "string" },
+    "environments": {
+      "oneOf": [
+        { "type": "array", "items": { "type": "string" } },
+        { "type": "string" }
+      ]
+    },
+    "blueprint": {
+      "type": "string",
+      "enum": ["network", "network-ha", "network-secure"]
+    },
+    "layout": {
+      "type": "string",
+      "enum": ["flat", "modular"]
+    },
+    "vpc_cidr": { "type": "string" },
+    "az_count": { "type": "integer", "minimum": 1, "maximum": 6 },
+    "nat_mode": {
+      "type": "string",
+      "enum": ["none", "single", "per_az"]
+    },
+    "private_only": { "type": "boolean" },
+    "create_public_subnets": { "type": "boolean" },
+    "enable_flow_logs": { "type": "boolean" },
+    "enable_vpc_endpoints": { "type": "boolean" },
+    "enable_interface_endpoints": { "type": "boolean" },
+    "interface_endpoints": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "enable_backend": { "type": "boolean" },
+    "enable_bootstrap": { "type": "boolean" },
+    "generate_ci": { "type": "boolean" },
+    "generate_policies": { "type": "boolean" },
+    "generate_oidc": { "type": "boolean" },
+    "github_org": { "type": "string" },
+    "github_repo": { "type": "string" },
+    "gcp_project_id": { "type": "string" },
+    "tags": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  }
+}

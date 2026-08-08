@@ -1,0 +1,131 @@
+# -----------------------------------------------------------------------------
+# GCP Network — custom VPC, subnets, Cloud Router + Cloud NAT
+# Blueprint: {{ blueprint }} | NAT mode: {{ nat_mode }}
+# -----------------------------------------------------------------------------
+
+locals {
+  name_prefix   = "${var.project}-${var.environment}"
+  enable_nat    = var.nat_mode != "none"
+  create_public = var.create_public_subnets && length(var.public_subnets) > 0
+}
+
+resource "google_compute_network" "main" {
+  name                    = "${local.name_prefix}-vpc"
+  auto_create_subnetworks = false
+  routing_mode            = "REGIONAL"
+  mtu                     = 1460
+}
+
+resource "google_compute_subnetwork" "public" {
+  count = local.create_public ? var.az_count : 0
+
+  name          = "${local.name_prefix}-public-${count.index + 1}"
+  ip_cidr_range = var.public_subnets[count.index]
+  region        = var.region
+  network       = google_compute_network.main.id
+
+  private_ip_google_access = false
+
+  dynamic "log_config" {
+    for_each = var.enable_flow_logs ? [1] : []
+    content {
+      aggregation_interval = "INTERVAL_5_SEC"
+      flow_sampling        = 0.5
+      metadata             = "INCLUDE_ALL_METADATA"
+    }
+  }
+}
+
+resource "google_compute_subnetwork" "private" {
+  count = var.az_count
+
+  name          = "${local.name_prefix}-private-${count.index + 1}"
+  ip_cidr_range = var.private_subnets[count.index]
+  region        = var.region
+  network       = google_compute_network.main.id
+
+  private_ip_google_access = true
+
+  dynamic "secondary_ip_range" {
+    for_each = var.enable_gke_secondary_ranges ? [1] : []
+    content {
+      range_name    = "gke-pods"
+      ip_cidr_range = var.gke_pod_cidrs[count.index]
+    }
+  }
+
+  dynamic "secondary_ip_range" {
+    for_each = var.enable_gke_secondary_ranges ? [1] : []
+    content {
+      range_name    = "gke-services"
+      ip_cidr_range = var.gke_service_cidrs[count.index]
+    }
+  }
+
+  dynamic "log_config" {
+    for_each = var.enable_flow_logs ? [1] : []
+    content {
+      aggregation_interval = "INTERVAL_5_SEC"
+      flow_sampling        = 0.5
+      metadata             = "INCLUDE_ALL_METADATA"
+    }
+  }
+}
+
+resource "google_compute_subnetwork" "isolated" {
+  count = var.enable_isolated_subnets ? var.az_count : 0
+
+  name          = "${local.name_prefix}-isolated-${count.index + 1}"
+  ip_cidr_range = var.isolated_subnets[count.index]
+  region        = var.region
+  network       = google_compute_network.main.id
+
+  private_ip_google_access = true
+
+  dynamic "log_config" {
+    for_each = var.enable_flow_logs ? [1] : []
+    content {
+      aggregation_interval = "INTERVAL_5_SEC"
+      flow_sampling        = 0.5
+      metadata             = "INCLUDE_ALL_METADATA"
+    }
+  }
+}
+
+resource "google_compute_router" "main" {
+  count = local.enable_nat ? 1 : 0
+
+  name    = "${local.name_prefix}-router"
+  region  = var.region
+  network = google_compute_network.main.id
+
+  bgp {
+    asn = 64514
+  }
+}
+
+resource "google_compute_router_nat" "main" {
+  count = local.enable_nat ? 1 : 0
+
+  name                               = "${local.name_prefix}-nat"
+  router                             = google_compute_router.main[0].name
+  region                             = var.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
+
+  dynamic "subnetwork" {
+    for_each = google_compute_subnetwork.private
+    content {
+      name                    = subnetwork.value.id
+      source_ip_ranges_to_nat = ["ALL_IP_RANGES"]
+    }
+  }
+
+  log_config {
+    enable = var.enable_flow_logs
+    filter = "ERRORS_ONLY"
+  }
+}
+
+# Optional Private Google Access style endpoint for storage via PSA is complex;
+# Private Google Access on private subnets covers most GCS API needs without NAT.

@@ -1,0 +1,21 @@
+{% if cloud == "aws" %}
+provider "aws" {
+  region = {{ region | tf }}
+
+  default_tags {
+    tags = {{ tags | tf }}
+  }
+}
+{% elif cloud == "gcp" %}
+provider "google" {
+  project = {{ gcp_project | tf }}
+  region  = {{ region | tf }}
+}
+{% elif cloud == "azure" %}
+provider "azurerm" {
+  features {}
+{% if azure_subscription_id %}
+  subscription_id = {{ azure_subscription_id | tf }}
+{% endif %}
+}
+{% endif %}

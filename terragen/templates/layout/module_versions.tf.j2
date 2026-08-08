@@ -1,0 +1,23 @@
+# Network module — providers are configured by the calling root (envs/*)
+terraform {
+  required_version = "{{ terraform_version }}"
+
+  required_providers {
+{% if cloud == "aws" %}
+    aws = {
+      source  = "hashicorp/aws"
+      version = "{{ provider_version_aws }}"
+    }
+{% elif cloud == "gcp" %}
+    google = {
+      source  = "hashicorp/google"
+      version = "{{ provider_version_gcp }}"
+    }
+{% elif cloud == "azure" %}
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "{{ provider_version_azure }}"
+    }
+{% endif %}
+  }
+}

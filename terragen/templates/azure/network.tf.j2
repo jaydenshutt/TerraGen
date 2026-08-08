@@ -1,0 +1,88 @@
+# -----------------------------------------------------------------------------
+# Azure Network — Resource Group, VNet, subnets, NAT Gateway
+# Blueprint: {{ blueprint }} | NAT mode: {{ nat_mode }}
+# -----------------------------------------------------------------------------
+
+locals {
+  name_prefix       = "${var.project}-${var.environment}"
+  create_public     = var.create_public_subnets && length(var.public_subnets) > 0
+  nat_gateway_count = var.nat_mode == "none" ? 0 : (var.nat_mode == "single" ? 1 : var.az_count)
+}
+
+resource "azurerm_resource_group" "main" {
+  name     = "${local.name_prefix}-rg"
+  location = var.region
+  tags     = var.tags
+}
+
+resource "azurerm_virtual_network" "main" {
+  name                = "${local.name_prefix}-vnet"
+  address_space       = [var.vpc_cidr]
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = var.tags
+}
+
+resource "azurerm_subnet" "public" {
+  count = local.create_public ? var.az_count : 0
+
+  name                 = "${local.name_prefix}-public-${count.index + 1}"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [var.public_subnets[count.index]]
+}
+
+resource "azurerm_subnet" "private" {
+  count = var.az_count
+
+  name                 = "${local.name_prefix}-private-${count.index + 1}"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [var.private_subnets[count.index]]
+}
+
+resource "azurerm_subnet" "isolated" {
+  count = var.enable_isolated_subnets ? var.az_count : 0
+
+  name                 = "${local.name_prefix}-isolated-${count.index + 1}"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = [var.isolated_subnets[count.index]]
+}
+
+# --- NAT Gateway -------------------------------------------------------------
+
+resource "azurerm_public_ip" "nat" {
+  count = local.nat_gateway_count
+
+  name                = "${local.name_prefix}-nat-pip-${count.index + 1}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  tags                = var.tags
+}
+
+resource "azurerm_nat_gateway" "main" {
+  count = local.nat_gateway_count
+
+  name                = "${local.name_prefix}-nat-${count.index + 1}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku_name            = "Standard"
+  tags                = var.tags
+}
+
+resource "azurerm_nat_gateway_public_ip_association" "main" {
+  count = local.nat_gateway_count
+
+  nat_gateway_id       = azurerm_nat_gateway.main[count.index].id
+  public_ip_address_id = azurerm_public_ip.nat[count.index].id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "private" {
+  count = local.nat_gateway_count > 0 ? var.az_count : 0
+
+  subnet_id      = azurerm_subnet.private[count.index].id
+  nat_gateway_id = azurerm_nat_gateway.main[var.nat_mode == "single" ? 0 : count.index].id
+}

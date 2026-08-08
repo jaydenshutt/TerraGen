@@ -1,0 +1,11 @@
+project: demo-eks
+cloud: aws
+region: us-west-2
+environment: prod
+blueprint: eks-ready
+vpc_cidr: 10.90.0.0/16
+az_count: 3
+enable_flow_logs: true
+github_org: my-org
+github_repo: my-eks-infra
+owner: platform-team
