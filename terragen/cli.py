@@ -191,6 +191,8 @@ def interactive_config() -> TerraGenConfig:
         "  network-private — no public subnets / no NAT",
         "  network-3tier   — public + app + isolated data subnets",
         "  eks-ready / gke-ready / aks-ready — Kubernetes network prep",
+        "  eks-cluster / gke-cluster / aks-cluster — full managed K8s",
+        "  hub-spoke       — hub VPC + multiple spoke networks",
     )
     blueprint = _ask_choice("Blueprint", list(SUPPORTED_BLUEPRINTS), "network")
 
@@ -408,6 +410,24 @@ def interactive_config() -> TerraGenConfig:
     )
     generate_oidc = _ask_bool("Generate OIDC / federated CI identity stack?", True)
 
+    # IPv6 / hub-spoke extras (short)
+    _section("Advanced networking")
+    _explain(
+        "IPv6 dual-stack assigns IPv6 CIDRs to VPC/subnets (AWS/GCP/Azure).",
+        "Useful for modern dual-stack apps; leave off if you only need IPv4.",
+    )
+    enable_ipv6 = _ask_bool("Enable IPv6 dual-stack?", False)
+
+    spoke_count = 2
+    hub_cidr = vpc_cidr
+    if blueprint == "hub-spoke":
+        _explain(
+            "Hub-and-spoke creates one hub network plus isolated spoke networks.",
+            "AWS uses Transit Gateway by default; GCP/Azure use peering.",
+        )
+        spoke_count = _ask_int("Number of spoke networks", 2, 1, 8)
+        hub_cidr = _ask("Hub network CIDR", vpc_cidr)
+
     data = {
         "project": project,
         "cloud": cloud,
@@ -440,6 +460,9 @@ def interactive_config() -> TerraGenConfig:
         "generate_ci": generate_ci,
         "generate_policies": generate_policies,
         "generate_oidc": generate_oidc,
+        "enable_ipv6": enable_ipv6,
+        "spoke_count": spoke_count,
+        "hub_cidr": hub_cidr,
     }
     cfg = TerraGenConfig.from_dict(data)
 
@@ -457,6 +480,11 @@ def interactive_config() -> TerraGenConfig:
     if cfg.isolated_subnets:
         _print(f"  Isolated:     {cfg.isolated_subnets}")
     _print(f"  NAT:          {cfg.nat_mode} ({est['gateways']} gateway(s), ~${est['monthly_usd_low']}/mo idle)")
+    _print(f"  IPv6:         {cfg.enable_ipv6}")
+    if cfg.enable_cluster:
+        _print(f"  Cluster:      {cfg.cluster_name} (v{cfg.cluster_version})")
+    if cfg.enable_hub_spoke:
+        _print(f"  Hub-spoke:    hub={cfg.hub_cidr} spokes={cfg.spoke_count} via {cfg.hub_spoke_connectivity}")
     _print(
         f"  Features:     flow_logs={cfg.enable_flow_logs}  "
         f"gw_endpoints={cfg.enable_vpc_endpoints}  "
@@ -667,6 +695,11 @@ def _overrides_from_args(args: argparse.Namespace) -> dict:
         out["generate_oidc"] = False
     if getattr(args, "interface_endpoints", False):
         out["enable_interface_endpoints"] = True
+    if getattr(args, "ipv6", False):
+        out["enable_ipv6"] = True
+    if getattr(args, "spoke_count", None) is not None:
+        out["spoke_count"] = args.spoke_count
+        out["enable_hub_spoke"] = True
     return out
 
 
@@ -747,6 +780,49 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     report = run_doctor(Path(args.project_dir) if args.project_dir else None)
     _print(format_report(report))
     return 0 if report.ok else 1
+
+
+def cmd_import(args: argparse.Namespace) -> int:
+    """Brownfield: discover existing network and emit import blocks."""
+    from terragen.import_brownfield import (
+        discover_aws_vpc,
+        generate_import_project,
+        load_inventory,
+    )
+
+    outdir = Path(args.out or "./imported-network")
+    try:
+        if args.inventory:
+            disc = load_inventory(Path(args.inventory))
+        elif args.cloud == "aws" and args.vpc_id:
+            _print(f"Discovering AWS VPC {args.vpc_id} in {args.region} …")
+            disc = discover_aws_vpc(args.vpc_id, args.region or "us-east-1")
+        else:
+            _err(
+                "Provide either:\n"
+                "  --inventory path/to/discovered.json\n"
+                "  or --cloud aws --vpc-id vpc-xxxxxxxx [--region us-east-1]"
+            )
+            return 1
+
+        if args.dry_run:
+            _print(json.dumps(disc.to_dict(), indent=2))
+            return 0
+
+        written = generate_import_project(disc, outdir)
+        _print(f"✓ Brownfield import project written to: {outdir}")
+        _print(f"  VPC/VNet: {disc.vpc_id}  CIDR: {disc.vpc_cidr}")
+        _print(f"  Files: {len(written)}")
+        _print()
+        _print("Next steps:")
+        _print(f"  1. cd {outdir}")
+        _print("  2. Review imports.tf + network.tf against reality")
+        _print("  3. terraform init && terraform plan")
+        _print("  4. Apply only after plan shows acceptable drift/adoption")
+        return 0
+    except Exception as e:
+        _err(f"Import failed: {e}")
+        return 1
 
 
 def cmd_schema(args: argparse.Namespace) -> int:
@@ -872,6 +948,17 @@ def build_parser() -> argparse.ArgumentParser:
             action="store_true",
             help="After generate, run terraform/tofu fmt + validate if installed",
         )
+        p.add_argument(
+            "--ipv6",
+            action="store_true",
+            help="Enable IPv6 dual-stack on the generated network",
+        )
+        p.add_argument(
+            "--spoke-count",
+            dest="spoke_count",
+            type=int,
+            help="Hub-spoke: number of spoke networks",
+        )
 
     g = sub.add_parser("generate", help="Generate a Terraform project (default command)")
     add_gen_flags(g)
@@ -908,6 +995,26 @@ def build_parser() -> argparse.ArgumentParser:
         "--project-dir", "-d", help="Optional generated project to inspect"
     )
     doc.set_defaults(func=cmd_doctor)
+
+    imp = sub.add_parser(
+        "import",
+        help="Brownfield: discover existing VPC and emit Terraform import project",
+    )
+    imp.add_argument("--cloud", choices=SUPPORTED_CLOUDS, help="Cloud provider")
+    imp.add_argument("--vpc-id", dest="vpc_id", help="AWS VPC ID (vpc-…)")
+    imp.add_argument("--region", help="Region for live discovery")
+    imp.add_argument(
+        "--inventory",
+        "-i",
+        help="JSON inventory file (from prior discovery or hand-written)",
+    )
+    imp.add_argument("--out", "-o", default="./imported-network", help="Output directory")
+    imp.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print discovered inventory JSON without writing files",
+    )
+    imp.set_defaults(func=cmd_import)
 
     sch = sub.add_parser("schema", help="Print or write JSON Schema for answers files")
     sch.add_argument("--out", "-o", help="Write schema to this path")
@@ -948,6 +1055,7 @@ _KNOWN_COMMANDS = (
     "validate",
     "bootstrap",
     "doctor",
+    "import",
     "schema",
     "regions",
     "blueprints",

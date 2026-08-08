@@ -109,6 +109,58 @@ BLUEPRINTS: Dict[str, dict] = {
         "best_for": "Azure Kubernetes Service (network only — not the cluster)",
         "clouds": ["azure"],
     },
+    "eks-cluster": {
+        "name": "Amazon EKS Cluster",
+        "summary": "Full EKS control plane + managed node group on an HA dual-stack-capable VPC.",
+        "includes": [
+            "EKS-ready network (NAT, endpoints, subnet tags)",
+            "EKS cluster IAM roles",
+            "Managed node group with autoscaling bounds",
+            "Cluster security group rules for nodes",
+            "Optional IPv6 dual-stack when enable_ipv6=true",
+        ],
+        "best_for": "Running Kubernetes workloads on AWS",
+        "clouds": ["aws"],
+    },
+    "gke-cluster": {
+        "name": "Google GKE Cluster",
+        "summary": "GKE Standard cluster with VPC-native networking and secondary ranges.",
+        "includes": [
+            "GKE-ready custom VPC + Cloud NAT",
+            "Pod and service secondary ranges",
+            "Regional or zonal GKE cluster",
+            "Node pool with autoscaling",
+            "Private nodes option",
+        ],
+        "best_for": "Running Kubernetes workloads on GCP",
+        "clouds": ["gcp"],
+    },
+    "aks-cluster": {
+        "name": "Azure AKS Cluster",
+        "summary": "AKS managed cluster with system node pool on an HA VNet.",
+        "includes": [
+            "AKS-ready VNet + NAT + NSGs",
+            "AKS cluster with system node pool",
+            "Azure CNI or kubenet (Azure CNI default)",
+            "RBAC enabled",
+            "Network contributor wiring notes",
+        ],
+        "best_for": "Running Kubernetes workloads on Azure",
+        "clouds": ["azure"],
+    },
+    "hub-spoke": {
+        "name": "Hub-and-Spoke Network",
+        "summary": "Central hub VPC/VNet plus multiple spoke networks with TGW or peering.",
+        "includes": [
+            "Hub network with public/private subnets + NAT",
+            "N spoke networks with private subnets",
+            "AWS: Transit Gateway (default) or VPC peering",
+            "GCP/Azure: hub-spoke VPC/VNet peering",
+            "Route tables for spoke → hub egress",
+        ],
+        "best_for": "Multi-environment or multi-team isolation with shared edge",
+        "clouds": ["aws", "gcp", "azure"],
+    },
 }
 
 

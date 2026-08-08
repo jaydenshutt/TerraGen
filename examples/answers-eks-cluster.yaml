@@ -1,0 +1,13 @@
+project: demo-eks-full
+cloud: aws
+region: us-east-1
+environment: dev
+blueprint: eks-cluster
+vpc_cidr: 10.120.0.0/16
+az_count: 2
+enable_ipv6: false
+node_desired_size: 2
+node_min_size: 1
+node_max_size: 4
+node_instance_type: t3.medium
+owner: platform-team

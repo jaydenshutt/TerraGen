@@ -23,6 +23,9 @@ resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
+{% if enable_ipv6 %}
+  assign_generated_ipv6_cidr_block = true
+{% endif %}
 
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-vpc"
@@ -36,6 +39,10 @@ resource "aws_subnet" "public" {
   cidr_block              = var.public_subnets[count.index]
   availability_zone       = local.azs[count.index]
   map_public_ip_on_launch = true
+{% if enable_ipv6 %}
+  ipv6_cidr_block                 = cidrsubnet(aws_vpc.main.ipv6_cidr_block, 8, count.index)
+  assign_ipv6_address_on_creation = true
+{% endif %}
 
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-public-${count.index + 1}"
@@ -51,6 +58,10 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_subnets[count.index]
   availability_zone = local.azs[count.index]
+{% if enable_ipv6 %}
+  ipv6_cidr_block                 = cidrsubnet(aws_vpc.main.ipv6_cidr_block, 8, count.index + 16)
+  assign_ipv6_address_on_creation = true
+{% endif %}
 
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-private-${count.index + 1}"
@@ -67,6 +78,10 @@ resource "aws_subnet" "isolated" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.isolated_subnets[count.index]
   availability_zone = local.azs[count.index]
+{% if enable_ipv6 %}
+  ipv6_cidr_block                 = cidrsubnet(aws_vpc.main.ipv6_cidr_block, 8, count.index + 32)
+  assign_ipv6_address_on_creation = true
+{% endif %}
 
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-isolated-${count.index + 1}"
@@ -101,6 +116,33 @@ resource "aws_route" "public_internet" {
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.main[0].id
 }
+
+{% if enable_ipv6 %}
+resource "aws_egress_only_internet_gateway" "main" {
+  count  = local.create_igw ? 1 : 0
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(var.tags, {
+    Name = "${local.name_prefix}-eigw"
+  })
+}
+
+resource "aws_route" "public_ipv6_internet" {
+  count = local.create_igw ? 1 : 0
+
+  route_table_id              = aws_route_table.public[0].id
+  destination_ipv6_cidr_block = "::/0"
+  gateway_id                  = aws_internet_gateway.main[0].id
+}
+
+resource "aws_route" "private_ipv6_egress" {
+  count = local.create_igw && local.nat_gateway_count == 0 ? var.az_count : (local.create_igw ? var.az_count : 0)
+
+  route_table_id              = aws_route_table.private[count.index].id
+  destination_ipv6_cidr_block = "::/0"
+  egress_only_gateway_id      = aws_egress_only_internet_gateway.main[0].id
+}
+{% endif %}
 
 resource "aws_route_table_association" "public" {
   count = local.create_public ? var.az_count : 0

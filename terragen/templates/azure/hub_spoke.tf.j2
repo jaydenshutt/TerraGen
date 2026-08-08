@@ -1,0 +1,61 @@
+# -----------------------------------------------------------------------------
+# Hub-and-spoke — VNet peering (Azure)
+# Hub: {{ hub_cidr or vpc_cidr }} | Spokes: {{ spoke_count }}
+# -----------------------------------------------------------------------------
+
+locals {
+  spoke_cidrs = {{ spoke_cidrs | tf }}
+}
+
+resource "azurerm_virtual_network" "spoke" {
+  count = {{ spoke_count }}
+
+  name                = "${local.name_prefix}-spoke-${count.index + 1}-vnet"
+  address_space       = [local.spoke_cidrs[count.index]]
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = var.tags
+}
+
+resource "azurerm_subnet" "spoke_private" {
+  count = {{ spoke_count }}
+
+  name                 = "${local.name_prefix}-spoke-${count.index + 1}-private"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.spoke[count.index].name
+  address_prefixes     = [cidrsubnet(local.spoke_cidrs[count.index], 4, 0)]
+}
+
+resource "azurerm_virtual_network_peering" "hub_to_spoke" {
+  count = {{ spoke_count }}
+
+  name                      = "${local.name_prefix}-hub-to-spoke-${count.index + 1}"
+  resource_group_name       = azurerm_resource_group.main.name
+  virtual_network_name      = azurerm_virtual_network.main.name
+  remote_virtual_network_id = azurerm_virtual_network.spoke[count.index].id
+
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = true
+}
+
+resource "azurerm_virtual_network_peering" "spoke_to_hub" {
+  count = {{ spoke_count }}
+
+  name                      = "${local.name_prefix}-spoke-${count.index + 1}-to-hub"
+  resource_group_name       = azurerm_resource_group.main.name
+  virtual_network_name      = azurerm_virtual_network.spoke[count.index].name
+  remote_virtual_network_id = azurerm_virtual_network.main.id
+
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+  use_remote_gateways          = false
+}
+
+output "spoke_vnet_ids" {
+  value = azurerm_virtual_network.spoke[*].id
+}
+
+output "spoke_cidrs" {
+  value = local.spoke_cidrs
+}

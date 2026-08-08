@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.0.0 — 2026-08-08
+
+### Added
+- **Real cluster blueprints**: `eks-cluster`, `gke-cluster`, `aks-cluster` (control plane + node pools)
+- **Hub-and-spoke**: `hub-spoke` with AWS Transit Gateway (or peering) and GCP/Azure peering
+- **IPv6 dual-stack**: `enable_ipv6` / `--ipv6` on VPC and subnets (AWS EIGW, GCP stack_type, Azure ULA)
+- **Brownfield import**: `terragen import` for AWS live VPC discovery (boto3) or inventory JSON → import blocks
+- Examples for clusters, hub-spoke, IPv6, and sample inventory
+
+### Notes
+- Cluster stacks are opinionated starters — review IAM, versions, and private API settings before production
+- Hub-spoke TGW incurs AWS hourly cost; use `hub_spoke_connectivity: peering` for a cheaper lab
+
 ## 2.2.0 — 2026-08-08
 
 ### Added

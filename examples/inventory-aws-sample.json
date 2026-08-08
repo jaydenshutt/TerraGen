@@ -1,0 +1,42 @@
+{
+  "cloud": "aws",
+  "region": "us-east-1",
+  "vpc_id": "vpc-0abc123def456",
+  "vpc_cidr": "10.0.0.0/16",
+  "internet_gateway_id": "igw-0abc123",
+  "nat_gateway_ids": ["nat-0abc"],
+  "route_table_ids": ["rtb-1", "rtb-2"],
+  "subnets": [
+    {
+      "id": "subnet-pub-a",
+      "cidr": "10.0.0.0/24",
+      "az": "us-east-1a",
+      "public": true,
+      "name": "public-a"
+    },
+    {
+      "id": "subnet-pub-b",
+      "cidr": "10.0.1.0/24",
+      "az": "us-east-1b",
+      "public": true,
+      "name": "public-b"
+    },
+    {
+      "id": "subnet-priv-a",
+      "cidr": "10.0.10.0/24",
+      "az": "us-east-1a",
+      "public": false,
+      "name": "private-a"
+    },
+    {
+      "id": "subnet-priv-b",
+      "cidr": "10.0.11.0/24",
+      "az": "us-east-1b",
+      "public": false,
+      "name": "private-b"
+    }
+  ],
+  "tags": {
+    "Name": "legacy-vpc"
+  }
+}

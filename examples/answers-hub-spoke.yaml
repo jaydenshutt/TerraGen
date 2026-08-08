@@ -1,0 +1,12 @@
+project: demo-hub
+cloud: aws
+region: us-east-1
+environment: shared
+blueprint: hub-spoke
+hub_cidr: 10.0.0.0/16
+spoke_count: 2
+az_count: 2
+nat_mode: single
+hub_spoke_connectivity: tgw
+enable_ipv6: false
+owner: platform-team

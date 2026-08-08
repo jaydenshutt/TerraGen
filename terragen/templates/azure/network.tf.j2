@@ -16,8 +16,13 @@ resource "azurerm_resource_group" "main" {
 }
 
 resource "azurerm_virtual_network" "main" {
-  name                = "${local.name_prefix}-vnet"
-  address_space       = [var.vpc_cidr]
+  name = "${local.name_prefix}-vnet"
+{% if enable_ipv6 %}
+  # Dual-stack: IPv4 + ULA IPv6 space (adjust for production)
+  address_space = [var.vpc_cidr, "fd00:db8:1::/48"]
+{% else %}
+  address_space = [var.vpc_cidr]
+{% endif %}
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   tags                = var.tags

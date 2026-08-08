@@ -89,6 +89,12 @@ def _plan_flat(cfg: TerraGenConfig) -> List[tuple[str, str]]:
     if cfg.enable_flow_logs or cfg.enable_billing_alerts or cfg.enable_guardduty:
         files.append((f"{cloud}/observability.tf.j2", "observability.tf"))
 
+    if cfg.enable_cluster:
+        files.append((f"{cloud}/cluster.tf.j2", "cluster.tf"))
+
+    if cfg.enable_hub_spoke:
+        files.append((f"{cloud}/hub_spoke.tf.j2", "hub_spoke.tf"))
+
     if cfg.enable_backend:
         files.append(("backend.tf.j2", "backend.tf"))
 
@@ -117,6 +123,12 @@ def _plan_modular(cfg: TerraGenConfig) -> List[tuple[str, str]]:
     ]
     if cfg.enable_flow_logs or cfg.enable_billing_alerts or cfg.enable_guardduty:
         files.append((f"{cloud}/observability.tf.j2", f"{mod}/observability.tf"))
+
+    if cfg.enable_cluster:
+        files.append((f"{cloud}/cluster.tf.j2", f"{mod}/cluster.tf"))
+
+    if cfg.enable_hub_spoke:
+        files.append((f"{cloud}/hub_spoke.tf.j2", f"{mod}/hub_spoke.tf"))
 
     # One root per environment (providers use baked values, not module vars)
     for env in cfg.env_list:

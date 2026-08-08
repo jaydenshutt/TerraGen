@@ -1,0 +1,9 @@
+project: demo-dualstack
+cloud: aws
+region: us-east-1
+environment: dev
+blueprint: network-ha
+vpc_cidr: 10.150.0.0/16
+az_count: 2
+enable_ipv6: true
+owner: platform-team

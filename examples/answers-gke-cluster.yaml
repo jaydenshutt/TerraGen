@@ -1,0 +1,10 @@
+project: demo-gke-full
+cloud: gcp
+region: us-central1
+environment: dev
+blueprint: gke-cluster
+vpc_cidr: 10.130.0.0/16
+az_count: 2
+gcp_project_id: my-gcp-billing-project
+node_instance_type: e2-medium
+owner: platform-team

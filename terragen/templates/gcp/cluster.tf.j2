@@ -1,0 +1,85 @@
+# -----------------------------------------------------------------------------
+# Google Kubernetes Engine (Standard) — VPC-native
+# Blueprint: {{ blueprint }}
+# -----------------------------------------------------------------------------
+
+resource "google_container_cluster" "main" {
+  name     = {{ cluster_name | tf }}
+  location = var.region
+
+  network    = google_compute_network.main.name
+  subnetwork = google_compute_subnetwork.private[0].name
+
+  # Remove default node pool; we manage a separate pool
+  remove_default_node_pool = true
+  initial_node_count       = 1
+
+  ip_allocation_policy {
+    cluster_secondary_range_name  = "gke-pods"
+    services_secondary_range_name = "gke-services"
+  }
+
+  private_cluster_config {
+    enable_private_nodes    = {{ cluster_private_endpoint | tf }}
+    enable_private_endpoint = false
+    master_ipv4_cidr_block  = "172.31.255.0/28"
+  }
+
+  release_channel {
+    channel = "REGULAR"
+  }
+
+  # Workload Identity
+  workload_identity_config {
+    workload_pool = "${var.gcp_project_id}.svc.id.goog"
+  }
+
+  resource_labels = {
+    project     = var.project
+    environment = var.environment
+    managed_by  = "terragen"
+  }
+
+  depends_on = [
+    google_compute_subnetwork.private,
+  ]
+}
+
+resource "google_container_node_pool" "main" {
+  name     = "${local.name_prefix}-pool"
+  location = var.region
+  cluster  = google_container_cluster.main.name
+
+  initial_node_count = {{ node_desired_size }}
+
+  autoscaling {
+    min_node_count = {{ node_min_size }}
+    max_node_count = {{ node_max_size }}
+  }
+
+  node_config {
+    machine_type = {{ node_instance_type | tf }}
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform",
+    ]
+    labels = {
+      environment = var.environment
+    }
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
+  }
+}
+
+output "gke_cluster_name" {
+  value = google_container_cluster.main.name
+}
+
+output "gke_cluster_endpoint" {
+  value     = google_container_cluster.main.endpoint
+  sensitive = true
+}
+
+output "gke_cluster_location" {
+  value = google_container_cluster.main.location
+}

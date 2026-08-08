@@ -28,6 +28,10 @@ SUPPORTED_BLUEPRINTS = (
     "eks-ready",
     "gke-ready",
     "aks-ready",
+    "eks-cluster",
+    "gke-cluster",
+    "aks-cluster",
+    "hub-spoke",
 )
 NAT_MODES = ("none", "single", "per_az")
 ENVIRONMENTS = ("dev", "staging", "prod", "shared")
@@ -85,6 +89,27 @@ class TerraGenConfig:
     gke_pod_cidrs: List[str] = field(default_factory=list)
     gke_service_cidrs: List[str] = field(default_factory=list)
     enable_aks_tags: bool = False
+
+    # Real managed Kubernetes clusters (not just network prep)
+    enable_cluster: bool = False
+    cluster_name: str = ""
+    cluster_version: str = ""  # empty = provider default / latest supported
+    node_instance_type: str = "t3.medium"
+    node_desired_size: int = 2
+    node_min_size: int = 1
+    node_max_size: int = 4
+    cluster_private_endpoint: bool = True
+
+    # Hub-and-spoke
+    enable_hub_spoke: bool = False
+    hub_cidr: str = "10.0.0.0/16"
+    spoke_count: int = 2
+    spoke_cidrs: List[str] = field(default_factory=list)
+    hub_spoke_connectivity: str = "tgw"  # tgw | peering (AWS); peering for GCP/Azure
+
+    # IPv6 dual-stack (already had enable_ipv6)
+    ipv6_only: bool = False  # reserved; dual-stack is default when enable_ipv6
+
 
     # Security
     enable_bastion_sg: bool = False
@@ -152,9 +177,16 @@ class TerraGenConfig:
                 e.strip() for e in self.interface_endpoints.split(",") if e.strip()
             ]
         self.environments = [e.lower() for e in (self.environments or [])]
+        if isinstance(self.spoke_cidrs, str):
+            self.spoke_cidrs = [
+                c.strip() for c in self.spoke_cidrs.split(",") if c.strip()
+            ]
+        self.hub_spoke_connectivity = (self.hub_spoke_connectivity or "tgw").lower()
         self._apply_blueprint_defaults()
         self._apply_private_only_defaults()
         self._ensure_interface_endpoints()
+        self._ensure_cluster_name()
+        self._ensure_spoke_cidrs()
         self._ensure_tags()
         self._ensure_subnets()
 
@@ -236,6 +268,71 @@ class TerraGenConfig:
             if self.az_count < 2:
                 self.az_count = 2
 
+        elif bp == "eks-cluster":
+            self.cloud = "aws"
+            if self.nat_mode != "none":
+                self.nat_mode = "per_az"
+            self.create_public_subnets = True
+            self.enable_flow_logs = True
+            self.enable_vpc_endpoints = True
+            self.enable_interface_endpoints = True
+            self.enable_eks_subnet_tags = True
+            self.enable_cluster = True
+            self.enable_guardduty = True
+            if self.az_count < 2:
+                self.az_count = 2
+            if not self.cluster_version:
+                self.cluster_version = "1.29"
+            if not self.node_instance_type:
+                self.node_instance_type = "t3.medium"
+
+        elif bp == "gke-cluster":
+            self.cloud = "gcp"
+            if self.nat_mode == "none":
+                self.nat_mode = "single"
+            self.create_public_subnets = True
+            self.enable_flow_logs = True
+            self.enable_gke_secondary_ranges = True
+            self.enable_cluster = True
+            if self.az_count < 2:
+                self.az_count = 2
+            if not self.cluster_version:
+                self.cluster_version = "1.29"
+            if not self.node_instance_type:
+                self.node_instance_type = "e2-medium"
+
+        elif bp == "aks-cluster":
+            self.cloud = "azure"
+            if self.nat_mode != "none":
+                self.nat_mode = "per_az"
+            self.create_public_subnets = True
+            self.enable_flow_logs = True
+            self.enable_nsg_defaults = True
+            self.enable_aks_tags = True
+            self.enable_cluster = True
+            if self.az_count < 2:
+                self.az_count = 2
+            if not self.cluster_version:
+                self.cluster_version = "1.29"
+            if not self.node_instance_type:
+                self.node_instance_type = "Standard_D2s_v3"
+
+        elif bp == "hub-spoke":
+            self.enable_hub_spoke = True
+            self.enable_flow_logs = True
+            self.enable_vpc_endpoints = True
+            if self.nat_mode == "none":
+                self.nat_mode = "single"
+            if self.az_count < 2:
+                self.az_count = 2
+            # Hub uses hub_cidr as primary VPC CIDR for subnet planning
+            if self.hub_cidr:
+                self.vpc_cidr = self.hub_cidr
+            if self.cloud == "aws":
+                self.hub_spoke_connectivity = self.hub_spoke_connectivity or "tgw"
+            else:
+                self.hub_spoke_connectivity = "peering"
+
     def _apply_private_only_defaults(self) -> None:
         """When NAT is disabled, prefer private-only usable networking."""
         if self.nat_mode != "none":
@@ -250,6 +347,23 @@ class TerraGenConfig:
     def _ensure_interface_endpoints(self) -> None:
         if self.enable_interface_endpoints and not self.interface_endpoints:
             self.interface_endpoints = list(DEFAULT_AWS_INTERFACE_ENDPOINTS)
+
+    def _ensure_cluster_name(self) -> None:
+        if self.enable_cluster and not self.cluster_name:
+            self.cluster_name = f"{self.project}-{self.environment}-k8s"
+
+    def _ensure_spoke_cidrs(self) -> None:
+        if not self.enable_hub_spoke:
+            return
+        if self.spoke_cidrs and len(self.spoke_cidrs) >= self.spoke_count:
+            self.spoke_cidrs = self.spoke_cidrs[: self.spoke_count]
+            return
+        # Default spoke CIDRs: 10.1.0.0/16, 10.2.0.0/16, …
+        from terragen.cidrs import compute_spoke_cidrs
+
+        self.spoke_cidrs = compute_spoke_cidrs(
+            self.hub_cidr or self.vpc_cidr, self.spoke_count
+        )
 
     def _ensure_tags(self) -> None:
         base = {
@@ -411,6 +525,9 @@ class TerraGenConfig:
                 "interface_endpoints_json": json.dumps(self.interface_endpoints),
                 "gke_pod_cidrs_json": json.dumps(self.gke_pod_cidrs),
                 "gke_service_cidrs_json": json.dumps(self.gke_service_cidrs),
+                "spoke_cidrs_json": json.dumps(self.spoke_cidrs),
+                "cluster_name_effective": self.cluster_name
+                or f"{self.project}-{self.environment}-k8s",
             }
         )
         return ctx

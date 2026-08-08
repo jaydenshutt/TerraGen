@@ -1,0 +1,9 @@
+project: demo-aks-full
+cloud: azure
+region: eastus
+environment: dev
+blueprint: aks-cluster
+vpc_cidr: 10.140.0.0/16
+az_count: 2
+node_instance_type: Standard_D2s_v3
+owner: platform-team

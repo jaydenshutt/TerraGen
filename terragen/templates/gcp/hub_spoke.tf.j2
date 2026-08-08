@@ -1,0 +1,61 @@
+# -----------------------------------------------------------------------------
+# Hub-and-spoke — VPC peering (GCP)
+# Hub: {{ hub_cidr or vpc_cidr }} | Spokes: {{ spoke_count }}
+# -----------------------------------------------------------------------------
+
+locals {
+  spoke_cidrs = {{ spoke_cidrs | tf }}
+}
+
+resource "google_compute_network" "spoke" {
+  count = {{ spoke_count }}
+
+  name                    = "${local.name_prefix}-spoke-${count.index + 1}"
+  auto_create_subnetworks = false
+  routing_mode            = "REGIONAL"
+}
+
+resource "google_compute_subnetwork" "spoke_private" {
+  count = {{ spoke_count }}
+
+  name          = "${local.name_prefix}-spoke-${count.index + 1}-private"
+  ip_cidr_range = cidrsubnet(local.spoke_cidrs[count.index], 4, 0)
+  region        = var.region
+  network       = google_compute_network.spoke[count.index].id
+
+  private_ip_google_access = true
+{% if enable_ipv6 %}
+  stack_type       = "IPV4_IPV6"
+  ipv6_access_type = "EXTERNAL"
+{% endif %}
+}
+
+resource "google_compute_network_peering" "hub_to_spoke" {
+  count = {{ spoke_count }}
+
+  name         = "${local.name_prefix}-hub-to-spoke-${count.index + 1}"
+  network      = google_compute_network.main.id
+  peer_network = google_compute_network.spoke[count.index].id
+
+  export_custom_routes = true
+  import_custom_routes = true
+}
+
+resource "google_compute_network_peering" "spoke_to_hub" {
+  count = {{ spoke_count }}
+
+  name         = "${local.name_prefix}-spoke-${count.index + 1}-to-hub"
+  network      = google_compute_network.spoke[count.index].id
+  peer_network = google_compute_network.main.id
+
+  export_custom_routes = true
+  import_custom_routes = true
+}
+
+output "spoke_network_ids" {
+  value = google_compute_network.spoke[*].id
+}
+
+output "spoke_cidrs" {
+  value = local.spoke_cidrs
+}

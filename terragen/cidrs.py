@@ -123,6 +123,35 @@ def compute_gke_secondary_ranges(
     return pods, services
 
 
+def compute_spoke_cidrs(hub_cidr: str, spoke_count: int) -> List[str]:
+    """
+    Allocate non-overlapping /16-style spoke CIDRs near the hub.
+
+    Prefers sequential 10.N.0.0/16 blocks that do not collide with the hub.
+    """
+    if spoke_count < 1:
+        raise ValueError("spoke_count must be at least 1")
+    hub = ipaddress.ip_network(hub_cidr, strict=False)
+    spokes: List[str] = []
+    # Try 10.0.0.0/8 then 172.16.0.0/12
+    candidates = []
+    for n in range(0, 256):
+        candidates.append(ipaddress.ip_network(f"10.{n}.0.0/16"))
+    for n in range(16, 32):
+        candidates.append(ipaddress.ip_network(f"172.{n}.0.0/16"))
+    for c in candidates:
+        if c.overlaps(hub):
+            continue
+        if any(c.overlaps(ipaddress.ip_network(s)) for s in spokes):
+            continue
+        spokes.append(str(c))
+        if len(spokes) >= spoke_count:
+            break
+    if len(spokes) < spoke_count:
+        raise ValueError("Could not allocate enough non-overlapping spoke CIDRs")
+    return spokes
+
+
 def validate_custom_subnets(
     vpc_cidr: str,
     public_subnets: Sequence[str],

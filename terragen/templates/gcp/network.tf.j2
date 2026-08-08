@@ -25,6 +25,10 @@ resource "google_compute_subnetwork" "public" {
   network       = google_compute_network.main.id
 
   private_ip_google_access = false
+{% if enable_ipv6 %}
+  stack_type       = "IPV4_IPV6"
+  ipv6_access_type = "EXTERNAL"
+{% endif %}
 
   dynamic "log_config" {
     for_each = var.enable_flow_logs ? [1] : []
@@ -45,6 +49,10 @@ resource "google_compute_subnetwork" "private" {
   network       = google_compute_network.main.id
 
   private_ip_google_access = true
+{% if enable_ipv6 %}
+  stack_type       = "IPV4_IPV6"
+  ipv6_access_type = "INTERNAL"
+{% endif %}
 
   dynamic "secondary_ip_range" {
     for_each = var.enable_gke_secondary_ranges ? [1] : []

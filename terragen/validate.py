@@ -70,6 +70,9 @@ def validate_config(cfg: TerraGenConfig) -> ValidationResult:
             "eks-ready": "aws",
             "gke-ready": "gcp",
             "aks-ready": "azure",
+            "eks-cluster": "aws",
+            "gke-cluster": "gcp",
+            "aks-cluster": "azure",
         }
         need = cloud_locked.get(cfg.blueprint)
         if need and cfg.cloud != need:

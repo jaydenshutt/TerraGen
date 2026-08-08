@@ -21,6 +21,10 @@ def test_all_blueprint_ids_registered():
         "eks-ready",
         "gke-ready",
         "aks-ready",
+        "eks-cluster",
+        "gke-cluster",
+        "aks-cluster",
+        "hub-spoke",
     }
 
 

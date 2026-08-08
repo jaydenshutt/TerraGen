@@ -24,8 +24,28 @@
     },
     "blueprint": {
       "type": "string",
-      "enum": ["network", "network-ha", "network-secure"]
+      "enum": [
+        "network",
+        "network-ha",
+        "network-secure",
+        "network-private",
+        "network-3tier",
+        "eks-ready",
+        "gke-ready",
+        "aks-ready",
+        "eks-cluster",
+        "gke-cluster",
+        "aks-cluster",
+        "hub-spoke"
+      ]
     },
+    "enable_ipv6": { "type": "boolean" },
+    "enable_cluster": { "type": "boolean" },
+    "cluster_name": { "type": "string" },
+    "enable_hub_spoke": { "type": "boolean" },
+    "spoke_count": { "type": "integer", "minimum": 1, "maximum": 16 },
+    "hub_cidr": { "type": "string" },
+    "hub_spoke_connectivity": { "type": "string", "enum": ["tgw", "peering"] },
     "layout": {
       "type": "string",
       "enum": ["flat", "modular"]

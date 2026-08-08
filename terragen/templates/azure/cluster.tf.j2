@@ -1,0 +1,65 @@
+# -----------------------------------------------------------------------------
+# Azure Kubernetes Service (AKS)
+# Blueprint: {{ blueprint }}
+# -----------------------------------------------------------------------------
+
+resource "azurerm_kubernetes_cluster" "main" {
+  name                = {{ cluster_name | tf }}
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  dns_prefix          = "${var.project}${var.environment}"
+  kubernetes_version        = {{ cluster_version | tf }}
+
+  default_node_pool {
+    name                = "system"
+    vm_size             = {{ node_instance_type | tf }}
+    node_count          = {{ node_desired_size }}
+    min_count           = {{ node_min_size }}
+    max_count           = {{ node_max_size }}
+    enable_auto_scaling = true
+    vnet_subnet_id      = azurerm_subnet.private[0].id
+    type                = "VirtualMachineScaleSets"
+  }
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  network_profile {
+    network_plugin    = "azure"
+    load_balancer_sku = "standard"
+    outbound_type     = "loadBalancer"
+  }
+
+  role_based_access_control_enabled = true
+
+  tags = var.tags
+
+  depends_on = [
+    azurerm_subnet.private,
+  ]
+}
+
+# Allow AKS to manage networking on the VNet
+resource "azurerm_role_assignment" "aks_network" {
+  scope                = azurerm_virtual_network.main.id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_kubernetes_cluster.main.identity[0].principal_id
+}
+
+output "aks_cluster_name" {
+  value = azurerm_kubernetes_cluster.main.name
+}
+
+output "aks_cluster_id" {
+  value = azurerm_kubernetes_cluster.main.id
+}
+
+output "aks_kube_config_raw" {
+  value     = azurerm_kubernetes_cluster.main.kube_config_raw
+  sensitive = true
+}
+
+output "aks_fqdn" {
+  value = azurerm_kubernetes_cluster.main.fqdn
+}

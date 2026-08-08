@@ -117,6 +117,30 @@ variable "create_public_subnets" {
   default     = {{ create_public_subnets | tf }}
 }
 
+variable "enable_ipv6" {
+  description = "Enable IPv6 dual-stack on VPC and subnets where supported."
+  type        = bool
+  default     = {{ enable_ipv6 | tf }}
+}
+
+variable "enable_cluster" {
+  description = "Whether a managed Kubernetes cluster is included in this stack."
+  type        = bool
+  default     = {{ enable_cluster | tf }}
+}
+
+variable "cluster_name" {
+  description = "Managed Kubernetes cluster name."
+  type        = string
+  default     = {{ cluster_name | tf }}
+}
+
+variable "enable_hub_spoke" {
+  description = "Whether hub-and-spoke networks are included."
+  type        = bool
+  default     = {{ enable_hub_spoke | tf }}
+}
+
 variable "enable_bastion_sg" {
   description = "Create a bastion / management security group or firewall rule."
   type        = bool

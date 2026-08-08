@@ -26,7 +26,9 @@ Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 
 - **Multi-cloud**: AWS, GCP, Azure with real resource parity (not stubs)
 - **Layouts**: `flat` (single root) or `modular` (`modules/network` + `envs/{dev,prod}`)
-- **Blueprints**: `network`, `network-ha`, `network-secure`, `network-private`, `network-3tier`, `eks-ready`, `gke-ready`, `aks-ready`
+- **Blueprints**: foundation networks, private/3-tier, K8s-ready, **full EKS/GKE/AKS clusters**, **hub-and-spoke**
+- **IPv6 dual-stack**: optional dual-stack VPC/subnets (AWS/GCP/Azure)
+- **Brownfield import**: `terragen import` discovers an existing AWS VPC and emits Terraform import blocks
 - **Private-only**: no NAT/public subnets + AWS interface endpoint pack (SSM, ECR, logs, …)
 - **Interactive & non-interactive**: prompts or `--answers` JSON/YAML
 - **Smart CIDR planning**: auto public/private subnets per AZ (or bring your own)
@@ -125,6 +127,7 @@ terragen generate \
 | `terragen bootstrap` | Create remote state backend (`terraform apply` in `bootstrap/`) |
 | `terragen validate -a answers.yaml` | Validate an answers file |
 | `terragen doctor` | Check Python deps, templates, Terraform, cloud CLIs |
+| `terragen import` | Brownfield: discover VPC → Terraform import project |
 | `terragen schema` | Print/write JSON Schema for answers files |
 | `terragen regions aws\|gcp\|azure` | List curated regions |
 | `terragen blueprints` | List blueprints |
@@ -149,6 +152,28 @@ Common `generate` options: `--answers`, `--out`, `--force`, `--dry-run`, `--layo
 | `eks-ready` | AWS HA + ELB subnet tags + ECR/SSM endpoints (network only) |
 | `gke-ready` | GCP + secondary ranges for pods/services + Cloud NAT |
 | `aks-ready` | Azure HA VNet + NSGs + AKS-oriented tags |
+| `eks-cluster` | **Full Amazon EKS** control plane + managed node group |
+| `gke-cluster` | **Full GKE** Standard cluster + node pool (VPC-native) |
+| `aks-cluster` | **Full AKS** cluster + system node pool |
+| `hub-spoke` | Hub VPC/VNet + N spokes (AWS TGW or peering; GCP/Azure peering) |
+
+### IPv6 dual-stack
+
+```bash
+python -m terragen generate --cloud aws --blueprint network-ha --ipv6 --project dual --out ./dual --force
+# or answers: enable_ipv6: true
+```
+
+### Brownfield import (existing AWS VPC)
+
+```bash
+# Live discovery (needs AWS creds + boto3)
+python -m terragen import --cloud aws --vpc-id vpc-0abc123 --region us-east-1 --out ./imported
+
+# Or from a JSON inventory (see examples/inventory-aws-sample.json)
+python -m terragen import --inventory examples/inventory-aws-sample.json --out ./imported
+cd ./imported && terraform init && terraform plan
+```
 
 ---
 
