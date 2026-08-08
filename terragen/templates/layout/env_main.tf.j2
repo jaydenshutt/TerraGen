@@ -27,6 +27,10 @@ module "network" {
   gke_service_cidrs           = {{ gke_service_cidrs | tf }}
   enable_bastion_sg           = {{ enable_bastion_sg | tf }}
   enable_nsg_defaults         = {{ enable_nsg_defaults | tf }}
+  enable_ipv6                 = {{ enable_ipv6 | tf }}
+  enable_cluster              = {{ enable_cluster | tf }}
+  cluster_name                = {{ cluster_name | tf }}
+  enable_hub_spoke            = {{ enable_hub_spoke | tf }}
   ssh_cidrs                   = {{ ssh_cidrs | tf }}
   tags                        = {{ tags | tf }}
 {% if cloud == "gcp" %}

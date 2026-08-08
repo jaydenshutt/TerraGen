@@ -21,6 +21,10 @@ htmlcov/
 *.swp
 .DS_Store
 
+# Local AI / session handoff (never publish)
+aistatus.md
+**/aistatus.md
+
 # Generated local test projects
 *-terraform/
 /out/

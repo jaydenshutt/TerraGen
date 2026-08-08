@@ -136,7 +136,7 @@ resource "aws_route" "public_ipv6_internet" {
 }
 
 resource "aws_route" "private_ipv6_egress" {
-  count = local.create_igw && local.nat_gateway_count == 0 ? var.az_count : (local.create_igw ? var.az_count : 0)
+  count = local.create_igw ? var.az_count : 0
 
   route_table_id              = aws_route_table.private[count.index].id
   destination_ipv6_cidr_block = "::/0"
