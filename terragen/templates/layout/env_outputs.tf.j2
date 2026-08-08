@@ -31,6 +31,22 @@ output "nat_gateway_ids" {
 output "default_security_group_id" {
   value = module.network.default_security_group_id
 }
+{% if enable_cluster %}
+output "eks_cluster_name" {
+  value = try(module.network.eks_cluster_name, null)
+}
+output "eks_cluster_endpoint" {
+  value = try(module.network.eks_cluster_endpoint, null)
+}
+{% endif %}
+{% if enable_hub_spoke %}
+output "spoke_vpc_ids" {
+  value = try(module.network.spoke_vpc_ids, null)
+}
+output "transit_gateway_id" {
+  value = try(module.network.transit_gateway_id, null)
+}
+{% endif %}
 {% elif cloud == "gcp" %}
 output "network_id" {
   value = module.network.network_id
@@ -43,6 +59,16 @@ output "public_subnet_ids" {
 output "private_subnet_ids" {
   value = module.network.private_subnet_ids
 }
+{% if enable_cluster %}
+output "gke_cluster_name" {
+  value = try(module.network.gke_cluster_name, null)
+}
+{% endif %}
+{% if enable_hub_spoke %}
+output "spoke_network_ids" {
+  value = try(module.network.spoke_network_ids, null)
+}
+{% endif %}
 {% elif cloud == "azure" %}
 output "resource_group_name" {
   value = module.network.resource_group_name
@@ -59,4 +85,14 @@ output "public_subnet_ids" {
 output "private_subnet_ids" {
   value = module.network.private_subnet_ids
 }
+{% if enable_cluster %}
+output "aks_cluster_name" {
+  value = try(module.network.aks_cluster_name, null)
+}
+{% endif %}
+{% if enable_hub_spoke %}
+output "spoke_vnet_ids" {
+  value = try(module.network.spoke_vnet_ids, null)
+}
+{% endif %}
 {% endif %}

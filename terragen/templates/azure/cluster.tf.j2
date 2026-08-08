@@ -13,7 +13,7 @@ resource "azurerm_kubernetes_cluster" "main" {
   default_node_pool {
     name                = "system"
     vm_size             = {{ node_instance_type | tf }}
-    node_count          = {{ node_desired_size }}
+    # With enable_auto_scaling, use min/max only (avoid node_count conflicts on azurerm 3.x+)
     min_count           = {{ node_min_size }}
     max_count           = {{ node_max_size }}
     enable_auto_scaling = true

@@ -99,11 +99,12 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "spoke" {
   })
 }
 
+# One route per (private RT × spoke) so every AZ private table can reach spokes
 resource "aws_route" "hub_to_spokes" {
-  count = {{ spoke_count }}
+  count = {{ spoke_count }} * var.az_count
 
-  route_table_id         = aws_route_table.private[0].id
-  destination_cidr_block = local.spoke_cidrs[count.index]
+  route_table_id         = aws_route_table.private[count.index % var.az_count].id
+  destination_cidr_block = local.spoke_cidrs[floor(count.index / var.az_count)]
   transit_gateway_id     = aws_ec2_transit_gateway.hub.id
 }
 
@@ -143,11 +144,11 @@ resource "aws_vpc_peering_connection" "hub_spoke" {
 }
 
 resource "aws_route" "hub_to_spoke_peer" {
-  count = {{ spoke_count }}
+  count = {{ spoke_count }} * var.az_count
 
-  route_table_id            = aws_route_table.private[0].id
-  destination_cidr_block    = local.spoke_cidrs[count.index]
-  vpc_peering_connection_id = aws_vpc_peering_connection.hub_spoke[count.index].id
+  route_table_id            = aws_route_table.private[count.index % var.az_count].id
+  destination_cidr_block    = local.spoke_cidrs[floor(count.index / var.az_count)]
+  vpc_peering_connection_id = aws_vpc_peering_connection.hub_spoke[floor(count.index / var.az_count)].id
 }
 
 resource "aws_route" "spoke_to_hub_peer" {
