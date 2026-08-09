@@ -87,6 +87,21 @@ def terraform_validate(
             check=False,
         )
         if p.returncode != 0:
+            combined = f"{p.stdout or ''}\n{p.stderr or ''}"
+            # Registry / DNS outages are environment issues, not product regressions
+            transient = (
+                "no such host" in combined
+                or "could not connect to registry" in combined
+                or "Failed to query available provider" in combined
+                or "dial tcp" in combined
+                or "i/o timeout" in combined
+                or "TLS handshake timeout" in combined
+            )
+            if transient:
+                pytest.skip(
+                    f"Terraform registry/network unavailable during {' '.join(args)}:\n"
+                    f"{combined[-500:]}"
+                )
             raise AssertionError(
                 f"{' '.join(args)} failed (cwd={cwd}, code={p.returncode}):\n"
                 f"--- stdout ---\n{p.stdout}\n--- stderr ---\n{p.stderr}"

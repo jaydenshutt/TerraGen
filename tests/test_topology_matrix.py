@@ -2,6 +2,7 @@
 Topology and layout matrix: hub-spoke modes, multi-cloud hub, modular combos.
 
 When terraform/tofu is available, each case is terraform-validated.
+Marked ``terraform`` so ``pytest -m "not terraform"`` stays offline-friendly.
 """
 
 from __future__ import annotations
@@ -14,10 +15,12 @@ from terragen.validate import validate_config
 
 from tests.tf_helpers import terraform_binary, terraform_validate, workdir_for_config
 
+pytestmark = pytest.mark.terraform
+
 
 def _maybe_tf_validate(cfg: TerraGenConfig, out) -> None:
     if terraform_binary() is None:
-        return
+        pytest.skip("terraform/tofu not on PATH")
     # Main env only — bootstrap covered separately in test_examples
     terraform_validate(out, workdir=workdir_for_config(out, cfg), also_bootstrap=False)
 
@@ -53,6 +56,7 @@ def test_hub_spoke_connectivity_matrix(tmp_path, cloud, connectivity, region, ex
 
     out = tmp_path / f"{cloud}-{connectivity}"
     render_project(cfg, out, force=True)
+    assert (out / "main.tf").exists()
     hub_tf = (out / "hub_spoke.tf").read_text(encoding="utf-8")
 
     if cloud == "aws" and connectivity == "tgw":
