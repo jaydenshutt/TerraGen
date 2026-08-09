@@ -166,6 +166,10 @@ python -m terragen generate --cloud aws --blueprint network-ha --ipv6 --project 
 
 ### Brownfield import (existing AWS VPC)
 
+Deep import discovers **VPC, subnets, IGW, NAT+EIP, route tables + associations,
+security groups, network ACLs, and VPC endpoints**, then writes Terraform 1.5+
+`import` blocks plus matching resources.
+
 ```bash
 # Live discovery (needs AWS creds + boto3)
 python -m terragen import --cloud aws --vpc-id vpc-0abc123 --region us-east-1 --out ./imported
@@ -174,6 +178,9 @@ python -m terragen import --cloud aws --vpc-id vpc-0abc123 --region us-east-1 --
 python -m terragen import --inventory examples/inventory-aws-sample.json --out ./imported
 cd ./imported && terraform init && terraform plan
 ```
+
+Output files: `imports.tf`, `vpc.tf`, `subnets.tf`, `gateways.tf`, `routes.tf`,
+`security.tf`, `acls.tf`, `endpoints.tf`, `outputs.tf`, `discovered.json`.
 
 ---
 

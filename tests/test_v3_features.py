@@ -111,10 +111,10 @@ def test_brownfield_import_from_inventory(tmp_path):
     out = tmp_path / "imported"
     files = generate_import_project(disc, out)
     assert (out / "imports.tf").exists()
-    assert (out / "network.tf").exists()
+    assert (out / "vpc.tf").exists()
     assert "import {" in (out / "imports.tf").read_text()
     assert disc.vpc_id in (out / "imports.tf").read_text()
-    assert len(files) >= 4
+    assert len(files) >= 6
 
 
 def test_examples_v3(tmp_path):

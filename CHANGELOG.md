@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.1 — 2026-08-08
+
+### Improved
+- **Deep AWS brownfield import**: subnets (named), IGW, NAT+EIP, route tables + associations + routes,
+  security groups (ingress/egress), network ACLs, VPC endpoints; multi-file HCL + counts in CLI
+- Richer sample inventory; import tests; terraform-validate-clean generated import projects
+- Hub-spoke multi-AZ private routes; AKS autoscaling pool without conflicting `node_count`; modular cluster outputs
+
 ## 3.0.0 — 2026-08-08
 
 ### Added

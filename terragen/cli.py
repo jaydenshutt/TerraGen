@@ -810,15 +810,24 @@ def cmd_import(args: argparse.Namespace) -> int:
             return 0
 
         written = generate_import_project(disc, outdir)
+        counts = disc.summary_counts()
         _print(f"✓ Brownfield import project written to: {outdir}")
-        _print(f"  VPC/VNet: {disc.vpc_id}  CIDR: {disc.vpc_cidr}")
+        _print(f"  VPC/VNet: {disc.vpc_id}  CIDR: {disc.vpc_cidr}  region: {disc.region}")
+        _print(
+            "  Discovered: "
+            f"subnets={counts['subnets']} igw={counts['internet_gateways']} "
+            f"nat={counts['nat_gateways']} eip={counts['eips']} "
+            f"rtb={counts['route_tables']} rta={counts['route_table_associations']} "
+            f"sg={counts['security_groups']} nacl={counts['network_acls']} "
+            f"vpce={counts['vpc_endpoints']}"
+        )
         _print(f"  Files: {len(written)}")
         _print()
         _print("Next steps:")
         _print(f"  1. cd {outdir}")
-        _print("  2. Review imports.tf + network.tf against reality")
+        _print("  2. Review imports.tf + *.tf against reality")
         _print("  3. terraform init && terraform plan")
-        _print("  4. Apply only after plan shows acceptable drift/adoption")
+        _print("  4. Fix remaining drift, then apply to bind state")
         return 0
     except Exception as e:
         _err(f"Import failed: {e}")

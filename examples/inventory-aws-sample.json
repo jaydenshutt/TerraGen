@@ -1,42 +1,245 @@
 {
   "cloud": "aws",
   "region": "us-east-1",
-  "vpc_id": "vpc-0abc123def456",
+  "vpc_id": "vpc-0abc123def456789",
   "vpc_cidr": "10.0.0.0/16",
-  "internet_gateway_id": "igw-0abc123",
-  "nat_gateway_ids": ["nat-0abc"],
-  "route_table_ids": ["rtb-1", "rtb-2"],
+  "enable_dns_support": true,
+  "enable_dns_hostnames": true,
+  "tags": {
+    "Name": "legacy-vpc",
+    "Environment": "prod"
+  },
   "subnets": [
     {
-      "id": "subnet-pub-a",
+      "id": "subnet-pub-aaa111",
       "cidr": "10.0.0.0/24",
       "az": "us-east-1a",
       "public": true,
-      "name": "public-a"
+      "name": "legacy-public-a",
+      "tags": { "Name": "legacy-public-a", "Tier": "public" }
     },
     {
-      "id": "subnet-pub-b",
+      "id": "subnet-pub-bbb222",
       "cidr": "10.0.1.0/24",
       "az": "us-east-1b",
       "public": true,
-      "name": "public-b"
+      "name": "legacy-public-b",
+      "tags": { "Name": "legacy-public-b", "Tier": "public" }
     },
     {
-      "id": "subnet-priv-a",
+      "id": "subnet-priv-ccc333",
       "cidr": "10.0.10.0/24",
       "az": "us-east-1a",
       "public": false,
-      "name": "private-a"
+      "name": "legacy-private-a",
+      "tags": { "Name": "legacy-private-a", "Tier": "private" }
     },
     {
-      "id": "subnet-priv-b",
+      "id": "subnet-priv-ddd444",
       "cidr": "10.0.11.0/24",
       "az": "us-east-1b",
       "public": false,
-      "name": "private-b"
+      "name": "legacy-private-b",
+      "tags": { "Name": "legacy-private-b", "Tier": "private" }
     }
   ],
-  "tags": {
-    "Name": "legacy-vpc"
-  }
+  "internet_gateways": [
+    {
+      "id": "igw-0igw111",
+      "name": "legacy-igw",
+      "tags": { "Name": "legacy-igw" }
+    }
+  ],
+  "eips": [
+    {
+      "id": "eipalloc-0eip111",
+      "public_ip": "203.0.113.10",
+      "domain": "vpc",
+      "name": "legacy-nat-eip",
+      "tags": { "Name": "legacy-nat-eip" }
+    }
+  ],
+  "nat_gateways": [
+    {
+      "id": "nat-0nat111",
+      "subnet_id": "subnet-pub-aaa111",
+      "allocation_id": "eipalloc-0eip111",
+      "public_ip": "203.0.113.10",
+      "name": "legacy-nat-a",
+      "tags": { "Name": "legacy-nat-a" }
+    }
+  ],
+  "route_tables": [
+    {
+      "id": "rtb-public-111",
+      "name": "legacy-public-rt",
+      "main": false,
+      "tags": { "Name": "legacy-public-rt" },
+      "routes": [
+        {
+          "destination_cidr": "10.0.0.0/16",
+          "gateway_id": "local",
+          "state": "active",
+          "origin": "CreateRouteTable"
+        },
+        {
+          "destination_cidr": "0.0.0.0/0",
+          "gateway_id": "igw-0igw111",
+          "state": "active",
+          "origin": "CreateRoute"
+        }
+      ]
+    },
+    {
+      "id": "rtb-private-222",
+      "name": "legacy-private-rt",
+      "main": false,
+      "tags": { "Name": "legacy-private-rt" },
+      "routes": [
+        {
+          "destination_cidr": "10.0.0.0/16",
+          "gateway_id": "local",
+          "state": "active",
+          "origin": "CreateRouteTable"
+        },
+        {
+          "destination_cidr": "0.0.0.0/0",
+          "nat_gateway_id": "nat-0nat111",
+          "state": "active",
+          "origin": "CreateRoute"
+        }
+      ]
+    }
+  ],
+  "route_table_associations": [
+    {
+      "id": "rtbassoc-1",
+      "subnet_id": "subnet-pub-aaa111",
+      "route_table_id": "rtb-public-111"
+    },
+    {
+      "id": "rtbassoc-2",
+      "subnet_id": "subnet-pub-bbb222",
+      "route_table_id": "rtb-public-111"
+    },
+    {
+      "id": "rtbassoc-3",
+      "subnet_id": "subnet-priv-ccc333",
+      "route_table_id": "rtb-private-222"
+    },
+    {
+      "id": "rtbassoc-4",
+      "subnet_id": "subnet-priv-ddd444",
+      "route_table_id": "rtb-private-222"
+    }
+  ],
+  "security_groups": [
+    {
+      "id": "sg-app111",
+      "name": "legacy-app-sg",
+      "description": "Application security group",
+      "tags": { "Name": "legacy-app-sg" },
+      "ingress": [
+        {
+          "from_port": 443,
+          "to_port": 443,
+          "protocol": "tcp",
+          "cidr_blocks": ["10.0.0.0/8"],
+          "ipv6_cidr_blocks": [],
+          "prefix_list_ids": [],
+          "security_groups": [],
+          "description": "HTTPS from corp"
+        }
+      ],
+      "egress": [
+        {
+          "from_port": 0,
+          "to_port": 0,
+          "protocol": "-1",
+          "cidr_blocks": ["0.0.0.0/0"],
+          "ipv6_cidr_blocks": [],
+          "prefix_list_ids": [],
+          "security_groups": [],
+          "description": "all egress"
+        }
+      ]
+    },
+    {
+      "id": "sg-default222",
+      "name": "default",
+      "description": "default VPC security group",
+      "tags": {},
+      "ingress": [
+        {
+          "from_port": 0,
+          "to_port": 0,
+          "protocol": "-1",
+          "cidr_blocks": [],
+          "ipv6_cidr_blocks": [],
+          "prefix_list_ids": [],
+          "security_groups": ["sg-default222"],
+          "description": "self"
+        }
+      ],
+      "egress": [
+        {
+          "from_port": 0,
+          "to_port": 0,
+          "protocol": "-1",
+          "cidr_blocks": ["0.0.0.0/0"],
+          "ipv6_cidr_blocks": [],
+          "prefix_list_ids": [],
+          "security_groups": [],
+          "description": null
+        }
+      ]
+    }
+  ],
+  "network_acls": [
+    {
+      "id": "acl-0default",
+      "name": "legacy-default-nacl",
+      "default": true,
+      "tags": { "Name": "legacy-default-nacl" },
+      "subnet_ids": [
+        "subnet-pub-aaa111",
+        "subnet-pub-bbb222",
+        "subnet-priv-ccc333",
+        "subnet-priv-ddd444"
+      ],
+      "entries": [
+        {
+          "rule_no": 100,
+          "egress": false,
+          "protocol": "-1",
+          "rule_action": "allow",
+          "cidr": "0.0.0.0/0",
+          "from_port": null,
+          "to_port": null
+        },
+        {
+          "rule_no": 100,
+          "egress": true,
+          "protocol": "-1",
+          "rule_action": "allow",
+          "cidr": "0.0.0.0/0",
+          "from_port": null,
+          "to_port": null
+        }
+      ]
+    }
+  ],
+  "vpc_endpoints": [
+    {
+      "id": "vpce-0s3aaa",
+      "service_name": "com.amazonaws.us-east-1.s3",
+      "type": "Gateway",
+      "route_table_ids": ["rtb-private-222"],
+      "subnet_ids": [],
+      "security_group_ids": [],
+      "private_dns_enabled": null,
+      "name": "legacy-s3-endpoint",
+      "tags": { "Name": "legacy-s3-endpoint" }
+    }
+  ]
 }
