@@ -25,12 +25,12 @@ answers (CLI / interactive / YAML|JSON)
 
 ## Design principles
 
-1. **Correct HCL first** — every template must render valid Terraform for its cloud.
-2. **Parity, not lowest common denominator** — use native constructs (SG vs firewall vs NSG).
-3. **Safe defaults** — deny-by-default ingress; open management access is opt-in.
-4. **Explicit cost knobs** — NAT mode is a first-class choice with estimates.
-5. **Bootstrap remote state** — never assume the state bucket already exists.
-6. **Regenerable** — answers snapshot + force overwrite of marked projects.
+1. **Correct HCL first** - every template must render valid Terraform for its cloud.
+2. **Parity, not lowest common denominator** - use native constructs (SG vs firewall vs NSG).
+3. **Safe defaults** - deny-by-default ingress; open management access is opt-in.
+4. **Explicit cost knobs** - NAT mode is a first-class choice with estimates.
+5. **Bootstrap remote state** - never assume the state bucket already exists.
+6. **Regenerable** - answers snapshot + force overwrite of marked projects.
 
 ## Module map
 

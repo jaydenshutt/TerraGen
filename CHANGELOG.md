@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.4 — 2026-08-09
+## 3.0.4 - 2026-08-09
 
 ### Added
 - **Modular cluster split:** with `layout: modular` and a cluster blueprint, TerraGen emits
@@ -9,25 +9,25 @@
 - Docs: layouts + clusters describe the split; tests cover AWS/GCP/Azure modular cluster trees
   and terraform validate on modular cluster profiles.
 
-## 3.0.3 — 2026-08-09
+## 3.0.3 - 2026-08-09
 
 ### Changed
 - **HashiCorp-aligned generated layout** (breaking for scripts that expected old names):
-  - `network.tf` → **`main.tf`** (flat root + `modules/network`)
-  - `versions.tf` → **`terraform.tf`**
-  - Import projects: `vpc.tf` / `network.tf` → **`main.tf`**; split **`providers.tf`** + **`terraform.tf`**
+ - `network.tf` → **`main.tf`** (flat root + `modules/network`)
+ - `versions.tf` → **`terraform.tf`**
+ - Import projects: `vpc.tf` / `network.tf` → **`main.tf`**; split **`providers.tf`** + **`terraform.tf`**
 - Domain files (`security.tf`, `cluster.tf`, …) kept for large multi-cloud stacks
 - Docs + generated README describe the standard layout
 - **Safer overwrite:** `generate` requires `--force` for any non-empty `--out` (including prior TerraGen projects) and wipes the directory on force so obsolete filenames cannot linger
 - **Import:** `--force` flag; re-import into a TerraGen import dir cleans the tree; missing templates fail hard instead of silent skip
 
-## 3.0.2 — 2026-08-09
+## 3.0.2 - 2026-08-09
 
 ### Added
 - **GCP / Azure brownfield import via inventory JSON** (no live cloud account required to generate)
-  - `examples/inventory-gcp-sample.json` — VPC network, subnets + secondary ranges, Cloud Router/NAT, firewalls
-  - `examples/inventory-azure-sample.json` — RG, VNet, subnets, NSGs, route tables, public IPs, NAT gateway
-  - Full multi-file HCL + `import` blocks; CI terraform-validate for all three sample inventories
+ - `examples/inventory-gcp-sample.json` - VPC network, subnets + secondary ranges, Cloud Router/NAT, firewalls
+ - `examples/inventory-azure-sample.json` - RG, VNet, subnets, NSGs, route tables, public IPs, NAT gateway
+ - Full multi-file HCL + `import` blocks; CI terraform-validate for all three sample inventories
 - Docs: expanded [brownfield-import](docs/brownfield-import.md); credentials note for offline inventory path
 - Runtime branding: `Created by Jayden Shutt` on version / wizard / doctor
 - Disclaimer (no warranty / use at own risk) in README + docs
@@ -35,7 +35,7 @@
 - Easier install: `pip install git+https://github.com/jaydenshutt/TerraGen.git` (no clone)
 - Layout docs: HashiCorp standard module / style-guide comparison (`docs/layouts.md`)
 
-## 3.0.1 — 2026-08-08
+## 3.0.1 - 2026-08-08
 
 ### Improved
 - **Deep AWS brownfield import**: subnets (named), IGW, NAT+EIP, route tables + associations + routes,
@@ -45,7 +45,7 @@
 - Package version aligned to **3.0.1**
 - CI expanded: full cluster examples, hub-spoke, IPv6, dedicated brownfield import job; use `python -m terragen` in CI
 
-## 3.0.0 — 2026-08-08
+## 3.0.0 - 2026-08-08
 
 ### Added
 - **Real cluster blueprints**: `eks-cluster`, `gke-cluster`, `aks-cluster` (control plane + node pools)
@@ -55,10 +55,10 @@
 - Examples for clusters, hub-spoke, IPv6, and sample inventory
 
 ### Notes
-- Cluster stacks are opinionated starters — review IAM, versions, and private API settings before production
+- Cluster stacks are opinionated starters - review IAM, versions, and private API settings before production
 - Hub-spoke TGW incurs AWS hourly cost; use `hub_spoke_connectivity: peering` for a cheaper lab
 
-## 2.2.0 — 2026-08-08
+## 2.2.0 - 2026-08-08
 
 ### Added
 - **Blueprints:** `network-private`, `network-3tier`, `eks-ready`, `gke-ready`, `aks-ready`
@@ -69,7 +69,7 @@
 - `generate --validate` runs terraform/tofu fmt + validate when installed
 - 5-minute quickstart in README; re-run command printed after generate
 
-## 2.1.0 — 2026-08-08
+## 2.1.0 - 2026-08-08
 
 ### Added
 - **Modular layout**: `layout: modular` → `modules/network` + `envs/{dev,prod}`
@@ -84,7 +84,7 @@
 - GitHub Actions workflow uses OIDC login steps and modular-aware working directory
 - Cost report mentions private endpoints and modular apply path
 
-## 2.0.0 — 2026-08-08
+## 2.0.0 - 2026-08-08
 
 Complete rewrite into a production-minded multi-cloud generator.
 
@@ -109,6 +109,6 @@ Complete rewrite into a production-minded multi-cloud generator.
 - GCP Cloud NAT now targets private subnets correctly via dynamic blocks
 - Input validation for project names, CIDRs, emails, cloud/blueprint choices
 
-## 1.0.0 — initial public prototype
+## 1.0.0 - initial public prototype
 
 Interactive / non-interactive Terraform starter for AWS, GCP, Azure (broken templates in tree).

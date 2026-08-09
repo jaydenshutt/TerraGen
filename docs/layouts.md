@@ -7,9 +7,9 @@ layout: flat      # default
 # or
 layout: modular
 environments:
-  - dev
-  - staging
-  - prod
+ - dev
+ - staging
+ - prod
 ```
 
 ```bash
@@ -22,7 +22,7 @@ TerraGen targets HashiCorp’s recommended names:
 
 | File | Role |
 |------|------|
-| **`main.tf`** | Primary entry — core network resources **or** `module` calls |
+| **`main.tf`** | Primary entry - core network resources **or** `module` calls |
 | **`variables.tf`** | Input variables |
 | **`outputs.tf`** | Outputs |
 | **`providers.tf`** | Provider configuration |
@@ -33,7 +33,7 @@ TerraGen targets HashiCorp’s recommended names:
 References:
 
 - [Standard module structure](https://developer.hashicorp.com/terraform/language/modules/develop/structure)
-- [Style guide — file names](https://developer.hashicorp.com/terraform/language/style)
+- [Style guide - file names](https://developer.hashicorp.com/terraform/language/style)
 
 **Complex stacks:** HashiCorp allows splitting resources across additional `.tf` files. TerraGen keeps focused files such as `security.tf`, `cluster.tf`, `hub_spoke.tf`, and `observability.tf` next to `main.tf` so large multi-cloud projects stay readable. Nested **module** blocks always live in `main.tf` (modular env roots).
 

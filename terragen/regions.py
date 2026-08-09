@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-# Curated common regions — not exhaustive, but covers typical defaults.
+# Curated common regions - not exhaustive, but covers typical defaults.
 # Used for interactive suggestions and soft validation (warnings, not hard fails).
 
 AWS_REGIONS: Dict[str, str] = {
@@ -82,7 +82,7 @@ DEFAULT_REGIONS = {
     "azure": "eastus",
 }
 
-# Approximate monthly NAT costs (USD) for rough guidance — not quotes.
+# Approximate monthly NAT costs (USD) for rough guidance - not quotes.
 # Sources: public pricing pages as of 2025; always verify with the cloud calculator.
 NAT_COST_HINTS = {
     "aws": {

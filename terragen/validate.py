@@ -29,7 +29,7 @@ class ValidationResult:
 
     def raise_if_errors(self) -> None:
         if self.errors:
-            msg = "Configuration validation failed:\n  - " + "\n  - ".join(self.errors)
+            msg = "Configuration validation failed:\n - " + "\n - ".join(self.errors)
             raise ValueError(msg)
 
 
@@ -101,7 +101,7 @@ def validate_config(cfg: TerraGenConfig) -> ValidationResult:
         result.errors.append(
             f"Project name '{cfg.project}' is invalid. "
             f"Try something like '{_suggest_project_slug(cfg.project)}' "
-            "(3–40 chars: lowercase letters, digits, hyphens; start with a letter)."
+            "(3-40 chars: lowercase letters, digits, hyphens; start with a letter)."
         )
 
     if not cfg.region or not str(cfg.region).strip():
@@ -109,7 +109,7 @@ def validate_config(cfg: TerraGenConfig) -> ValidationResult:
     elif cfg.cloud in SUPPORTED_CLOUDS and not is_known_region(cfg.cloud, cfg.region):
         result.warnings.append(
             f"Region '{cfg.region}' is not in TerraGen's curated list for {cfg.cloud}. "
-            "It may still be valid — double-check the cloud console."
+            "It may still be valid - double-check the cloud console."
         )
 
     try:
@@ -119,7 +119,7 @@ def validate_config(cfg: TerraGenConfig) -> ValidationResult:
         if net.prefixlen > 24:
             result.warnings.append(
                 f"VPC CIDR {cfg.vpc_cidr} is small (/{net.prefixlen}); "
-                "consider /16–/20 for multi-AZ production."
+                "consider /16-/20 for multi-AZ production."
             )
         if net.is_multicast or net.is_loopback:
             result.errors.append(f"VPC CIDR {cfg.vpc_cidr} is not a usable private range")
@@ -168,7 +168,7 @@ def validate_config(cfg: TerraGenConfig) -> ValidationResult:
 
     if cfg.enable_billing_alerts and not cfg.alert_emails:
         result.warnings.append(
-            "Billing alerts enabled but no alert_emails set — SNS/email subscriptions will be empty"
+            "Billing alerts enabled but no alert_emails set - SNS/email subscriptions will be empty"
         )
 
     if cfg.enable_bastion_sg:
@@ -179,7 +179,7 @@ def validate_config(cfg: TerraGenConfig) -> ValidationResult:
                 result.errors.append(f"Invalid SSH CIDR: {c}")
         if "0.0.0.0/0" in cfg.ssh_cidrs:
             result.warnings.append(
-                "Bastion/SSH security group allows 0.0.0.0/0 — avoid in production"
+                "Bastion/SSH security group allows 0.0.0.0/0 - avoid in production"
             )
 
     if cfg.cloud == "gcp" and not cfg.gcp_project_id:
@@ -193,7 +193,7 @@ def validate_config(cfg: TerraGenConfig) -> ValidationResult:
         if len(acct) < 3 or len(acct) > 24 or not acct.isalnum():
             result.errors.append(
                 f"Derived Azure storage account name '{acct}' is invalid. "
-                "Adjust project/environment to produce a 3–24 alphanumeric name."
+                "Adjust project/environment to produce a 3-24 alphanumeric name."
             )
 
     if cfg.nat_mode == "per_az" and cfg.az_count >= 3:

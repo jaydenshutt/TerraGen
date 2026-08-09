@@ -1,4 +1,4 @@
-# TerraGen sample — AWS network foundation
+# TerraGen sample - AWS network foundation
 project: demo-aws
 cloud: aws
 region: us-east-1

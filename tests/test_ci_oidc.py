@@ -52,7 +52,7 @@ def test_github_actions_yaml_expressions(tmp_path, cloud: str, layout: str):
     # No unrendered Jinja
     assert _JINJA_BLOCK.search(text) is None, "leftover {% %} in GHA YAML"
     assert _JINJA_LEFT.search(text) is None, (
-        "leftover {{ }} without $ — Jinja leaked into GHA YAML:\n" + text[:500]
+        "leftover {{ }} without $ - Jinja leaked into GHA YAML:\n" + text[:500]
     )
 
     # Valid GHA expression for working directory

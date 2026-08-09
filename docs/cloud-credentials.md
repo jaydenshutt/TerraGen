@@ -3,7 +3,7 @@
 TerraGen does **not** store cloud passwords or API keys. It generates Terraform (and optionally calls **read-only** AWS APIs for live import).  
 Authentication is the same system Terraform and the cloud CLIs already use.
 
-**Disclaimer:** credentials grant access to real accounts. Use least privilege where you can, prefer non-prod for experiments, and review plans before apply. See [README — Disclaimer](../README.md#disclaimer).
+**Disclaimer:** credentials grant access to real accounts. Use least privilege where you can, prefer non-prod for experiments, and review plans before apply. See [README - Disclaimer](../README.md#disclaimer).
 
 ---
 
@@ -11,12 +11,12 @@ Authentication is the same system Terraform and the cloud CLIs already use.
 
 | What you are doing | Cloud credentials required? |
 |--------------------|-------------------------------|
-| `terragen generate` / `init-answers` / `validate` / `schema` / `blueprints` / `cost` | **No** — local only |
+| `terragen generate` / `init-answers` / `validate` / `schema` / `blueprints` / `cost` | **No** - local only |
 | `terragen doctor` | **No** (only checks if CLIs exist) |
 | `terraform init -backend=false` + `validate` | **No** |
 | `terraform plan` / `apply` on a generated project | **Yes** for that cloud |
 | `terragen bootstrap` (creates state bucket/table) | **Yes** |
-| `terragen import --inventory …` (AWS / **GCP** / **Azure**) | **No** — offline inventory path |
+| `terragen import --inventory …` (AWS / **GCP** / **Azure**) | **No** - offline inventory path |
 | `terragen import --cloud aws --vpc-id …` (live) | **Yes** (AWS + `boto3`) |
 | GitHub Actions with generated OIDC workflow | **CI role secrets**, not your laptop keys |
 
@@ -47,7 +47,7 @@ TerraGen does not pass credentials on the command line. Configure them the usual
 - `terraform plan|apply` for AWS networks, EKS, hub-spoke, bootstrap S3/DynamoDB, OIDC stack  
 - `python -m terragen import --cloud aws --vpc-id …` (via **boto3**, same credential chain as the AWS SDK)
 
-### Option A — AWS CLI profile (common)
+### Option A - AWS CLI profile (common)
 
 ```bash
 # One-time or when rotating keys
@@ -62,7 +62,7 @@ export AWS_PROFILE=my-dev          # Linux / macOS
 aws sts get-caller-identity        # confirm who you are
 ```
 
-### Option B — Environment variables
+### Option B - Environment variables
 
 ```bash
 export AWS_ACCESS_KEY_ID=…
@@ -73,7 +73,7 @@ export AWS_DEFAULT_REGION=us-east-1
 
 Never commit these. Prefer SSO or a profile over long-lived keys in shell history.
 
-### Option C — AWS IAM Identity Center (SSO)
+### Option C - AWS IAM Identity Center (SSO)
 
 ```bash
 aws configure sso
@@ -199,7 +199,7 @@ Contributor (or custom) on the subscription/resource group for network stacks; A
 | Context | How auth works |
 |---------|----------------|
 | **Your machine** | AWS profile / SSO / ADC / `az login` (this guide) |
-| **Generated CI** | Workflow assumes a cloud role via **OIDC** — no long-lived access keys in GitHub if you wire it correctly |
+| **Generated CI** | Workflow assumes a cloud role via **OIDC** - no long-lived access keys in GitHub if you wire it correctly |
 
 OIDC is optional packaging under `oidc/` + `.github/workflows/terraform.yml`:
 
@@ -282,7 +282,7 @@ More: [Troubleshooting](troubleshooting.md).
 
 - Prefer **SSO / short-lived** credentials over permanent access keys.  
 - Do **not** put secrets in answers YAML or commit `*.tfstate`, `.env`, or key JSON.  
-- Generated `.gitignore` already ignores common state/secrets patterns — keep it.  
+- Generated `.gitignore` already ignores common state/secrets patterns - keep it.  
 - Use separate cloud accounts or projects for experiments.  
 - Review `terraform plan` every time; generators can still emit expensive or public resources depending on blueprint.
 

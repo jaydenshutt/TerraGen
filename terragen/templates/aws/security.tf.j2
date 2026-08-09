@@ -1,10 +1,10 @@
 # -----------------------------------------------------------------------------
-# AWS Security — baseline SG, optional bastion, default NACL hygiene
+# AWS Security - baseline SG, optional bastion, default NACL hygiene
 # -----------------------------------------------------------------------------
 
 resource "aws_security_group" "app" {
   name        = "${local.name_prefix}-app-sg"
-  description = "Baseline application security group — deny-by-default ingress"
+  description = "Baseline application security group - deny-by-default ingress"
   vpc_id      = aws_vpc.main.id
 
   # Allow all traffic within the SG (east-west app traffic)

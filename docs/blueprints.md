@@ -19,7 +19,7 @@ python -m terragen blueprint eks-cluster
 | `network-private` | No public subnets / NAT; AWS interface endpoints pack |
 | `network-3tier` | Public + private (app) + **isolated data** (no internet route) |
 
-## Kubernetes — network only
+## Kubernetes - network only
 
 | ID | Cloud | Intent |
 |----|-------|--------|
@@ -27,7 +27,7 @@ python -m terragen blueprint eks-cluster
 | `gke-ready` | GCP | Secondary ranges for pods/services (no cluster) |
 | `aks-ready` | Azure | NSGs + tags for AKS (no cluster) |
 
-## Kubernetes — full cluster
+## Kubernetes - full cluster
 
 | ID | Cloud | Creates |
 |----|-------|---------|

@@ -21,7 +21,7 @@ pytestmark = pytest.mark.terraform
 def _maybe_tf_validate(cfg: TerraGenConfig, out) -> None:
     if terraform_binary() is None:
         pytest.skip("terraform/tofu not on PATH")
-    # Main env only — bootstrap covered separately in test_examples
+    # Main env only - bootstrap covered separately in test_examples
     terraform_validate(out, workdir=workdir_for_config(out, cfg), also_bootstrap=False)
 
 

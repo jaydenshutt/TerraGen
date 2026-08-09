@@ -78,7 +78,7 @@ def _plan_flat(cfg: TerraGenConfig) -> List[tuple[str, str]]:
     HashiCorp-aligned names:
       terraform.tf, providers.tf, variables.tf, outputs.tf, main.tf, backend.tf
     Additional resource files (security, cluster, …) keep domain splits for
-    large multi-cloud stacks — allowed for complex modules.
+    large multi-cloud stacks - allowed for complex modules.
     """
     cloud = cfg.cloud
     files: List[tuple[str, str]] = [
@@ -89,7 +89,7 @@ def _plan_flat(cfg: TerraGenConfig) -> List[tuple[str, str]]:
         ("terraform.tfvars.j2", "terraform.tfvars"),
         ("gitignore.j2", ".gitignore"),
         ("README.md.j2", "README.md"),
-        # Primary entrypoint (was network.tf) — HashiCorp standard module structure
+        # Primary entrypoint (was network.tf) - HashiCorp standard module structure
         (f"{cloud}/network.tf.j2", "main.tf"),
         (f"{cloud}/security.tf.j2", "security.tf"),
     ]
@@ -121,7 +121,7 @@ def _plan_modular(cfg: TerraGenConfig) -> List[tuple[str, str]]:
     cloud = cfg.cloud
     mod = "modules/network"
     files: List[tuple[str, str]] = [
-        # Network module — standard structure
+        # Network module - standard structure
         ("layout/module_versions.tf.j2", f"{mod}/terraform.tf"),
         ("variables.tf.j2", f"{mod}/variables.tf"),
         ("outputs.tf.j2", f"{mod}/outputs.tf"),

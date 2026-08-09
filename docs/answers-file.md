@@ -1,6 +1,6 @@
 # Answers files
 
-Answers files drive **non-interactive**, repeatable generation — ideal for CI and shared team defaults.
+Answers files drive **non-interactive**, repeatable generation - ideal for CI and shared team defaults.
 
 ## Formats
 
@@ -37,7 +37,7 @@ python -m terragen generate --answers answers.yaml --out ./my-network --force
 
 ### Snapshot after a full interactive generate
 
-`python -m terragen generate` (interactive) also writes `terragen.answers.yaml` inside the project folder — a full snapshot of the Q&A for regeneration.
+`python -m terragen generate` (interactive) also writes `terragen.answers.yaml` inside the project folder - a full snapshot of the Q&A for regeneration.
 
 JSON Schema (for editors):
 
@@ -71,7 +71,7 @@ nat_mode: single
 | `layout` | `flat` \| `modular` |
 | `environments` | List of env roots when modular |
 | `vpc_cidr` | Primary IPv4 range |
-| `az_count` | 1–6 |
+| `az_count` | 1-6 |
 | `nat_mode` | `none` \| `single` \| `per_az` |
 | `private_only` | Shorthand: no NAT, private-focused (AWS endpoints) |
 | `enable_ipv6` | Dual-stack networking |

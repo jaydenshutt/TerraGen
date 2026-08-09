@@ -26,8 +26,8 @@ nat_mode: single
 | Cloud | Default | Alternative |
 |-------|---------|-------------|
 | AWS | **Transit Gateway** (`tgw`) | VPC peering (`peering`) |
-| GCP | VPC peering | — |
-| Azure | VNet peering | — |
+| GCP | VPC peering | - |
+| Azure | VNet peering | - |
 
 ## Mental model
 

@@ -10,7 +10,7 @@ With no answers file and no major flags, TerraGen runs a guided wizard.
 
 1. **Sections** with short plain-language help above each question  
 2. **Progress** markers like `[3/18]`  
-3. Defaults in `[brackets]` — press Enter to accept  
+3. Defaults in `[brackets]` - press Enter to accept  
 4. A **summary** of cloud, blueprint, CIDRs, NAT, features, and rough NAT cost  
 5. Confirm **Generate files with these settings?** before anything is written  
 6. **Ctrl+C** cancels cleanly  

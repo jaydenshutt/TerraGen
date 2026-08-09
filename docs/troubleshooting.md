@@ -43,7 +43,7 @@ Set `gcp_project_id` to your real billing project. Enable Compute / container AP
 
 ## Azure: storage account name invalid
 
-Derived names must be 3–24 alphanumeric. Shorten `project` / `environment`.
+Derived names must be 3-24 alphanumeric. Shorten `project` / `environment`.
 
 ## Plan shows huge NAT cost
 

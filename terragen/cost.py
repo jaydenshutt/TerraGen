@@ -38,7 +38,7 @@ def architecture_cost_report(cfg: TerraGenConfig, estimated_gb_out: float = 100.
     if cfg.az_count > 2 and cfg.environment in ("dev", "staging"):
         lines.append("  • Consider az_count=2 in non-prod unless you need full AZ symmetry.")
     if cfg.enable_flow_logs:
-        lines.append("  • Flow logs incur small storage/ingestion costs — set retention intentionally.")
+        lines.append("  • Flow logs incur small storage/ingestion costs - set retention intentionally.")
     if not any("Switch" in l or "Enable" in l or "Consider" in l for l in lines[-6:]):
         lines.append("  • Current layout looks cost-reasonable for its blueprint.")
     lines.append(

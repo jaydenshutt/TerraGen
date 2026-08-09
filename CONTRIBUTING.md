@@ -30,7 +30,7 @@ pytest -q
 
 ## Template rules
 
-- Never emit dual-column / merged garbage — each line must be valid HCL or Jinja
+- Never emit dual-column / merged garbage - each line must be valid HCL or Jinja
 - Prefer Terraform `count` / `for_each` and variables over hard-coding CIDRs in resources
 - Keep cloud-specific resources in `aws/`, `gcp/`, `azure/`
 - Shared files live in `common/`

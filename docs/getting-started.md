@@ -8,13 +8,13 @@ TerraGen is provided **as-is**, **without warranty of any kind**. You use it **a
 
 Generated projects can create real cloud resources that cost money and affect production if you apply them carelessly. Always review `terraform plan` (and security/IAM/network exposure) before apply. The authors take **no responsibility** for outcomes in your accounts.
 
-We **do** hope this tool helps you accelerate solid multi-cloud networking and IaC setup. Full legal terms: [LICENSE](../LICENSE). Plain-language summary: [README — Disclaimer](../README.md#disclaimer).
+We **do** hope this tool helps you accelerate solid multi-cloud networking and IaC setup. Full legal terms: [LICENSE](../LICENSE). Plain-language summary: [README - Disclaimer](../README.md#disclaimer).
 
 ## Prerequisites
 
 - **Python 3.10+**
 - **Terraform ≥ 1.5** (or OpenTofu 1.6+)
-- **Cloud credentials** — **not** required for `generate`; **required** for `terraform plan` / `apply`, `bootstrap`, and live AWS `import`
+- **Cloud credentials** - **not** required for `generate`; **required** for `terraform plan` / `apply`, `bootstrap`, and live AWS `import`
 
 | Cloud | Typical local login |
 |-------|---------------------|
@@ -26,7 +26,7 @@ Full guide (when you need auth, env vars, SSO, OIDC CI, Windows): **[Cloud crede
 
 ## 1. Install TerraGen
 
-### Option A — From GitHub (fastest for users)
+### Option A - From GitHub (fastest for users)
 
 ```bash
 python -m pip install "git+https://github.com/jaydenshutt/TerraGen.git"
@@ -34,7 +34,7 @@ python -m pip install "git+https://github.com/jaydenshutt/TerraGen.git"
 
 No clone required. You still need Terraform installed separately for `plan` / `apply`.
 
-### Option B — Clone (examples + development)
+### Option B - Clone (examples + development)
 
 ```bash
 git clone https://github.com/jaydenshutt/TerraGen.git
@@ -54,7 +54,7 @@ python -m terragen doctor
 
 ## 2. Generate a project (pick one)
 
-### Option A — Interactive wizard (best first time)
+### Option A - Interactive wizard (best first time)
 
 ```bash
 python -m terragen generate
@@ -69,7 +69,7 @@ python -m terragen init-answers --interactive --out answers.yaml
 python -m terragen generate --answers answers.yaml --out ./my-network --force
 ```
 
-### Option B — Example answers (fastest)
+### Option B - Example answers (fastest)
 
 ```bash
 python -m terragen generate \
@@ -78,7 +78,7 @@ python -m terragen generate \
   --force
 ```
 
-### Option C — Flags only
+### Option C - Flags only
 
 ```bash
 python -m terragen generate \
@@ -104,7 +104,7 @@ ls
 # expect: main.tf, variables.tf, outputs.tf, providers.tf, terraform.tf, backend.tf, bootstrap/, …
 ```
 
-Read the **generated `README.md`** in that folder — it is tailored to your cloud and options.
+Read the **generated `README.md`** in that folder - it is tailored to your cloud and options.
 
 ## 4. (Recommended) Create remote state storage
 
@@ -142,7 +142,7 @@ terraform init
 terraform plan
 ```
 
-Review the plan carefully (especially NAT gateways and public IPs — they cost money).
+Review the plan carefully (especially NAT gateways and public IPs - they cost money).
 
 ## 6. Apply (when ready)
 
@@ -165,7 +165,7 @@ python -m terragen generate \
 
 ## Next steps
 
-- [Cloud credentials](cloud-credentials.md) — AWS / GCP / Azure and CI OIDC
+- [Cloud credentials](cloud-credentials.md) - AWS / GCP / Azure and CI OIDC
 - Choose a richer [blueprint](blueprints.md) (private-only, EKS, hub-spoke, …)
 - Use [modular layout](layouts.md) for multi-environment repos
 - Wire [OIDC CI](cloud-credentials.md#local-laptop-vs-github-actions-oidc) from the generated `oidc/` folder
@@ -173,6 +173,6 @@ python -m terragen generate \
 
 ## Safety notes
 
-- Generated stacks are **starters** — review IAM, CIDRs, and public exposure before production.
+- Generated stacks are **starters** - review IAM, CIDRs, and public exposure before production.
 - `terraform destroy` deletes real cloud resources.
 - Prefer non-production accounts for first experiments.

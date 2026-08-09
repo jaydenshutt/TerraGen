@@ -4,8 +4,8 @@
 
 Remote backends (S3, GCS, Azure Storage) must **exist before** Terraform can store state there. TerraGen therefore emits:
 
-1. **`backend.tf`** — backend configuration for the main stack  
-2. **`bootstrap/`** — a separate tiny stack that creates the bucket/table/account  
+1. **`backend.tf`** - backend configuration for the main stack  
+2. **`bootstrap/`** - a separate tiny stack that creates the bucket/table/account  
 
 ## Typical flow
 

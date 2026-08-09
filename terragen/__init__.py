@@ -1,4 +1,4 @@
-"""TerraGen — world-class multi-cloud Terraform project generator."""
+"""TerraGen - world-class multi-cloud Terraform project generator."""
 
 __version__ = "3.0.4"
 __author__ = "Jayden Shutt"

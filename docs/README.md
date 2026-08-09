@@ -5,7 +5,7 @@ User-facing guides for installing, generating, deploying, and adopting Terraform
 | Guide | Description |
 |-------|-------------|
 | [Getting started](getting-started.md) | Install, first generate, first `terraform plan` |
-| [Cloud credentials](cloud-credentials.md) | AWS / GCP / Azure auth — when needed, local vs CI OIDC |
+| [Cloud credentials](cloud-credentials.md) | AWS / GCP / Azure auth - when needed, local vs CI OIDC |
 | [Interactive mode](interactive-mode.md) | Wizard questions explained end-to-end |
 | [Answers files](answers-file.md) | YAML/JSON schema, examples, automation |
 | [Blueprints](blueprints.md) | Network, private, 3-tier, K8s-ready, clusters, hub-spoke |
@@ -24,4 +24,4 @@ Also see the root [README](../README.md) and [examples/](../examples/).
 
 ### Disclaimer
 
-TerraGen is provided **as-is**, **without warranty**, and is used **at your own risk**. Authors accept **no responsibility** for cloud cost, outages, or security outcomes. Review every plan before apply. We hope it still helps you move faster—see [README — Disclaimer](../README.md#disclaimer), [Getting started](getting-started.md#disclaimer-read-before-you-apply), and [LICENSE](../LICENSE).
+TerraGen is provided **as-is**, **without warranty**, and is used **at your own risk**. Authors accept **no responsibility** for cloud cost, outages, or security outcomes. Review every plan before apply. We hope it still helps you move faster - see [README - Disclaimer](../README.md#disclaimer), [Getting started](getting-started.md#disclaimer-read-before-you-apply), and [LICENSE](../LICENSE).

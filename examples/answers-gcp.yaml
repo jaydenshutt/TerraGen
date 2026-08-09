@@ -1,4 +1,4 @@
-# TerraGen sample — GCP custom VPC + Cloud NAT
+# TerraGen sample - GCP custom VPC + Cloud NAT
 project: demo-gcp
 cloud: gcp
 region: us-central1
@@ -10,7 +10,7 @@ nat_mode: single
 enable_flow_logs: true
 enable_bastion_sg: true
 ssh_cidrs:
-  - 10.0.0.0/8
+ - 10.0.0.0/8
 gcp_project_id: my-gcp-billing-project
 enable_backend: true
 enable_bootstrap: true

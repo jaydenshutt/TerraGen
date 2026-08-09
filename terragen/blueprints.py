@@ -80,7 +80,7 @@ BLUEPRINTS: Dict[str, dict] = {
             "GuardDuty on",
             "Minimum 2 AZs",
         ],
-        "best_for": "Amazon EKS clusters (network only — not the control plane)",
+        "best_for": "Amazon EKS clusters (network only - not the control plane)",
         "clouds": ["aws"],
     },
     "gke-ready": {
@@ -93,7 +93,7 @@ BLUEPRINTS: Dict[str, dict] = {
             "Flow logs",
             "Firewall baseline for internal traffic",
         ],
-        "best_for": "Google Kubernetes Engine (network only — not the cluster)",
+        "best_for": "Google Kubernetes Engine (network only - not the cluster)",
         "clouds": ["gcp"],
     },
     "aks-ready": {
@@ -106,7 +106,7 @@ BLUEPRINTS: Dict[str, dict] = {
             "Flow-log scaffolding notes",
             "Minimum 2 AZs",
         ],
-        "best_for": "Azure Kubernetes Service (network only — not the cluster)",
+        "best_for": "Azure Kubernetes Service (network only - not the cluster)",
         "clouds": ["azure"],
     },
     "eks-cluster": {

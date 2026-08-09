@@ -1,8 +1,8 @@
 # -----------------------------------------------------------------------------
-# Google Kubernetes Engine (Standard) — VPC-native
+# Google Kubernetes Engine (Standard) - VPC-native
 # Blueprint: {{ blueprint }}
 {% if cluster_as_module %}# Module: modules/cluster (network provided via variables)
-{% else %}# Flat layout — uses VPC/subnets from this root module
+{% else %}# Flat layout - uses VPC/subnets from this root module
 {% endif %}# -----------------------------------------------------------------------------
 
 {% if cluster_as_module %}

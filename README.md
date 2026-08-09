@@ -10,7 +10,7 @@ Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 
 ## Documentation
 
-**Full walkthroughs live in [`docs/`](docs/README.md)** — getting started, interactive mode, answers files, blueprints, layouts, remote state, brownfield import, clusters, hub-spoke, CLI reference, and troubleshooting.
+**Full walkthroughs live in [`docs/`](docs/README.md)** - getting started, interactive mode, answers files, blueprints, layouts, remote state, brownfield import, clusters, hub-spoke, CLI reference, and troubleshooting.
 
 | Start here | |
 |------------|--|
@@ -61,7 +61,7 @@ Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 
 ```bash
 python -m pip install "git+https://github.com/jaydenshutt/TerraGen.git"
-python -m terragen version          # TerraGen x.y.z — Created by Jayden Shutt
+python -m terragen version          # TerraGen x.y.z - Created by Jayden Shutt
 python -m terragen generate         # interactive wizard
 ```
 
@@ -71,7 +71,7 @@ python -m terragen generate         # interactive wizard
 git clone https://github.com/jaydenshutt/TerraGen.git
 cd TerraGen
 python -m pip install -e ".[dev]"
-python -m terragen generate          # interactive — explains each question
+python -m terragen generate          # interactive - explains each question
 # follow prompts, confirm the summary, then:
 cd my-cloud-project-dev-terraform    # or whatever --out / project name you used
 terraform init -backend=false
@@ -87,7 +87,7 @@ python -m terragen generate -a examples/answers-aws.yaml -o ./my-network --force
 
 > **Windows tip:** if `terragen` is not on PATH, always use `python -m terragen …`.
 
-**Credentials:** `generate` is local-only. Configure AWS / GCP / Azure before `terraform plan` / `apply`, bootstrap, or live import — see **[Cloud credentials](docs/cloud-credentials.md)**.
+**Credentials:** `generate` is local-only. Configure AWS / GCP / Azure before `terraform plan` / `apply`, bootstrap, or live import - see **[Cloud credentials](docs/cloud-credentials.md)**.
 
 **Generated file layout:** HashiCorp-aligned `main.tf`, `variables.tf`, `outputs.tf`, `providers.tf`, `terraform.tf` (+ domain files like `security.tf` for large stacks). See [Layouts](docs/layouts.md).
 
@@ -199,7 +199,7 @@ python -m terragen generate --cloud aws --blueprint network-ha --ipv6 --project 
 
 | Path | Clouds |
 |------|--------|
-| **Inventory JSON** (offline) | AWS, **GCP**, **Azure** — no account needed to generate/validate |
+| **Inventory JSON** (offline) | AWS, **GCP**, **Azure** - no account needed to generate/validate |
 | **Live discovery** | AWS only (`boto3`, read-only) |
 
 ```bash
@@ -208,7 +208,7 @@ python -m terragen import --inventory examples/inventory-gcp-sample.json -o ./im
 python -m terragen import --inventory examples/inventory-azure-sample.json -o ./imported-azure
 python -m terragen import --inventory examples/inventory-aws-sample.json -o ./imported-aws
 
-# Live AWS discovery (needs AWS creds + boto3 — see docs/cloud-credentials.md)
+# Live AWS discovery (needs AWS creds + boto3 - see docs/cloud-credentials.md)
 python -m terragen import --cloud aws --vpc-id vpc-0abc123 --region us-east-1 -o ./imported
 
 cd ./imported-gcp && terraform init -backend=false && terraform validate
@@ -310,7 +310,7 @@ Resource group, VNet, public/private subnets, NAT Gateway(s) + Standard PIPs, NS
 
 ### Flat (default)
 
-Single root module — simplest for small projects.
+Single root module - simplest for small projects.
 
 ### Modular (recommended for multi-env)
 
@@ -385,13 +385,13 @@ TerraGen is provided **as-is** under the [MIT License](LICENSE), **without warra
 **You use this tool at your own risk.** Generated Terraform is a starting point only. Before you `plan` or `apply` in any account:
 
 - Review every resource, IAM policy, network exposure, and cost implication
-- Treat blueprints as accelerators—not certified production designs for your environment
+- Treat blueprints as accelerators - not certified production designs for your environment
 - Brownfield import and discovery can be imperfect; expect drift and manual fixes
 
 The authors and contributors accept **no responsibility** for cloud spend, outages, security incidents, data loss, compliance outcomes, or any other consequences of using TerraGen or the code it generates.
 
-We still **hope TerraGen helps you accelerate** multi-cloud networking and infrastructure-as-code—so you can spend less time on boilerplate and more time on what you are building.
+We still **hope TerraGen helps you accelerate** multi-cloud networking and infrastructure-as-code - so you can spend less time on boilerplate and more time on what you are building.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for the full legal text (including the “AS IS” and limitation of liability clauses).
+MIT - see [LICENSE](LICENSE) for the full legal text (including the “AS IS” and limitation of liability clauses).

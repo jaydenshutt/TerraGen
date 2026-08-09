@@ -1,4 +1,4 @@
-# TerraGen sample — Azure VNet + NAT Gateway
+# TerraGen sample - Azure VNet + NAT Gateway
 project: demo-azure
 cloud: azure
 region: eastus

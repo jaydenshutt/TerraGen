@@ -2,7 +2,7 @@
 
 Bring an **existing network** under Terraform using import blocks (Terraform ≥ 1.5).
 
-This is **not** full-account import — it targets the **VPC / VPC Network / VNet surface**.
+This is **not** full-account import - it targets the **VPC / VPC Network / VNet surface**.
 
 | Cloud | Inventory JSON (no account) | Live API discovery |
 |-------|----------------------------:|--------------------|
@@ -16,7 +16,7 @@ You **do not** need a GCP or Azure account to generate and `terraform validate` 
 
 ## Paths
 
-### A) Inventory JSON (all clouds — recommended offline path)
+### A) Inventory JSON (all clouds - recommended offline path)
 
 ```bash
 # AWS
@@ -41,7 +41,7 @@ terraform validate
 ### B) Live discovery (AWS only)
 
 Needs: **AWS credentials** + `boto3` (`pip install boto3`).  
-Discovery is **read-only** (`Describe*`). See **[Cloud credentials — AWS](cloud-credentials.md#aws)**.
+Discovery is **read-only** (`Describe*`). See **[Cloud credentials - AWS](cloud-credentials.md#aws)**.
 
 ```bash
 python -m terragen import \
@@ -57,7 +57,7 @@ python -m terragen import \
 # Live AWS
 python -m terragen import --cloud aws --vpc-id vpc-xxx --region us-east-1 --dry-run
 
-# Or load inventory and print normalized form after a full generate dry path —
+# Or load inventory and print normalized form after a full generate dry path - 
 # use --inventory then inspect discovered.json in the output directory.
 ```
 
@@ -110,7 +110,7 @@ Import IDs use shapes like:
 
 \* If `vpc_id` is a full ARM ID containing `/resourceGroups/{name}/`, the RG is parsed automatically.
 
-Sample IDs use a zero GUID subscription — **replace with real IDs before apply**.
+Sample IDs use a zero GUID subscription - **replace with real IDs before apply**.
 
 ---
 

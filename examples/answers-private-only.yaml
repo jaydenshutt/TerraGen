@@ -1,4 +1,4 @@
-# Private-only AWS network — no NAT, no public subnets, full endpoint pack
+# Private-only AWS network - no NAT, no public subnets, full endpoint pack
 project: demo-private
 cloud: aws
 region: us-east-1

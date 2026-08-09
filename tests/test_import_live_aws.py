@@ -1,5 +1,5 @@
 """
-Optional live AWS brownfield import — **read-only**.
+Optional live AWS brownfield import - **read-only**.
 
 Uses boto3 describe-* only (no Create/Update/Delete). Generates HCL locally
 and optionally terraform-validates. Never runs terraform apply / plan against
@@ -42,7 +42,7 @@ def _aws_session_ready() -> tuple[bool, str]:
         sts = session.client("sts", region_name=region)
         sts.get_caller_identity()
         return True, region
-    except Exception as e:  # noqa: BLE001 — any creds failure → skip
+    except Exception as e:  # noqa: BLE001 - any creds failure → skip
         return False, f"AWS credentials unavailable: {type(e).__name__}: {e}"
 
 
@@ -97,7 +97,7 @@ def test_live_discover_aws_vpc_readonly(tmp_path, live_aws_region: str):
     assert vpc_id in (out / "imports.tf").read_text(encoding="utf-8")
     assert len(files) >= 6
 
-    # Sanity: no apply was invoked — only local files
+    # Sanity: no apply was invoked - only local files
     assert not (out / "terraform.tfstate").exists()
 
 

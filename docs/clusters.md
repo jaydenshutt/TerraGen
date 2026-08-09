@@ -69,7 +69,7 @@ cluster_private_endpoint: true  # provider-specific private options
 ## Deploy checklist
 
 1. Bootstrap remote state ([guide](bootstrap-and-state.md))  
-2. `terraform plan` — expect IAM + control plane + nodes (costly)  
+2. `terraform plan` - expect IAM + control plane + nodes (costly)  
 3. Confirm K8s version is still supported in your region  
 4. After apply: configure `kubectl` with cloud CLI  
 5. Add cluster add-ons (CSI, ingress, etc.) outside this starter as needed  

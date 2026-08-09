@@ -59,7 +59,7 @@ def run_doctor(project_dir: Optional[Path] = None) -> DoctorReport:
         "terragen",
         True,
         f"version {__version__} on Python {sys.version.split()[0]} ({platform.system()})"
-        f" — Created by {__author__}",
+        f" - Created by {__author__}",
     )
 
     # Dependencies
@@ -68,7 +68,7 @@ def run_doctor(project_dir: Optional[Path] = None) -> DoctorReport:
         report.add(
             f"python:{mod}",
             ok,
-            "installed" if ok else "missing — pip install Jinja2 PyYAML",
+            "installed" if ok else "missing - pip install Jinja2 PyYAML",
             level="error",
         )
 

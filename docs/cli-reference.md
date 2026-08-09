@@ -8,7 +8,7 @@ python -m terragen <command> [options]
 terragen <command> [options]
 ```
 
-**Credentials:** most commands are local. Cloud auth is needed for `bootstrap` apply, live `import`, and for `terraform plan`/`apply` on generated code — [Cloud credentials](cloud-credentials.md).
+**Credentials:** most commands are local. Cloud auth is needed for `bootstrap` apply, live `import`, and for `terraform plan`/`apply` on generated code - [Cloud credentials](cloud-credentials.md).
 
 ## Commands
 
@@ -60,7 +60,7 @@ terragen <command> [options]
 
 | Flag | Meaning |
 |------|---------|
-| `-i` / `--inventory` | JSON inventory (AWS / GCP / Azure) — **no cloud account required** |
+| `-i` / `--inventory` | JSON inventory (AWS / GCP / Azure) - **no cloud account required** |
 | `--cloud aws` | Live discovery (AWS only today) |
 | `--vpc-id` | AWS VPC id (live path) |
 | `--region` | Region for live discovery |

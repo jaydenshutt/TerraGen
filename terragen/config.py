@@ -553,7 +553,7 @@ class TerraGenConfig:
     def to_answers_dict(self) -> Dict[str, Any]:
         """Serializable answers suitable for --answers files."""
         d = self.to_dict()
-        # Drop computed subnet lists if they match auto — keep them for reproducibility
+        # Drop computed subnet lists if they match auto - keep them for reproducibility
         return d
 
     @classmethod

@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# AWS Network — VPC, subnets, routing, NAT, gateway + interface endpoints
+# AWS Network - VPC, subnets, routing, NAT, gateway + interface endpoints
 # Blueprint: {{ blueprint }} | NAT mode: {{ nat_mode }}
 # -----------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ resource "aws_subnet" "private" {
   } : {})
 }
 
-# Isolated / data tier — no default route to NAT or IGW (VPC-local only)
+# Isolated / data tier - no default route to NAT or IGW (VPC-local only)
 resource "aws_subnet" "isolated" {
   count = var.enable_isolated_subnets ? var.az_count : 0
 

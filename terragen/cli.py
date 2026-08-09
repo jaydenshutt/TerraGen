@@ -55,7 +55,7 @@ class _Wizard:
 
     def tick(self, label: str = "") -> None:
         self.n += 1
-        suffix = f" — {label}" if label else ""
+        suffix = f" - {label}" if label else ""
         _print(f"  [{self.n}/{self.total}]{suffix}")
 
 
@@ -107,7 +107,7 @@ def _ask_int(prompt: str, default: int, min_v: int = 1, max_v: int = 6) -> int:
 def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     _print()
     _print("=" * 62)
-    _print("  TerraGen — multi-cloud Terraform network generator")
+    _print("  TerraGen - multi-cloud Terraform network generator")
     _print(f"  v{__version__}  ·  Created by {__author__}")
     _print("=" * 62)
     _print()
@@ -132,7 +132,7 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     wiz.tick("project name")
     _explain(
         "Project name is a short label used in resource names (e.g. my-app-dev-vpc).",
-        "Use lowercase letters, numbers, and hyphens only (3–40 characters).",
+        "Use lowercase letters, numbers, and hyphens only (3-40 characters).",
     )
     project = _ask("Project name", "my-cloud-project")
 
@@ -140,9 +140,9 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     _explain(
         "Which cloud you want to deploy into. TerraGen will emit native resources",
         "for that provider (AWS VPC, GCP VPC, or Azure VNet).",
-        "  aws   — Amazon Web Services",
-        "  gcp   — Google Cloud Platform",
-        "  azure — Microsoft Azure",
+        "  aws  - Amazon Web Services",
+        "  gcp  - Google Cloud Platform",
+        "  azure - Microsoft Azure",
     )
     cloud = _ask_choice("Cloud provider", list(SUPPORTED_CLOUDS), "aws")
 
@@ -166,8 +166,8 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     wiz.tick("layout")
     _explain(
         "How Terraform files are organized on disk:",
-        "  flat     — one folder; simplest for a single environment",
-        "  modular  — shared modules/network + envs/dev, envs/prod, …",
+        "  flat    - one folder; simplest for a single environment",
+        "  modular - shared modules/network + envs/dev, envs/prod, …",
         "             better when you share one network design across envs",
     )
     layout = _ask_choice("Project layout", list(LAYOUTS), "flat")
@@ -188,19 +188,19 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     # Always allow all blueprints but highlight cloud-native ones first
     _explain("A blueprint is an opinionated preset. Recommended for this cloud first:")
     for bp in list_blueprints(cloud):
-        _print(f"  ★ {bp['id']:16} — {bp['summary']}")
+        _print(f"  ★ {bp['id']:16} - {bp['summary']}")
     _explain("Other blueprints (still available):")
     for bp in list_blueprints():
         if bp["id"] not in cloud_bps:
-            _print(f"    {bp['id']:16} — {bp['summary']}")
+            _print(f"    {bp['id']:16} - {bp['summary']}")
     _explain(
         "Quick guide:",
-        "  network / network-ha / network-secure — general purpose",
-        "  network-private — no public subnets / no NAT",
-        "  network-3tier   — public + app + isolated data subnets",
-        "  eks-ready / gke-ready / aks-ready — Kubernetes network prep",
-        "  eks-cluster / gke-cluster / aks-cluster — full managed K8s",
-        "  hub-spoke       — hub VPC + multiple spoke networks",
+        "  network / network-ha / network-secure - general purpose",
+        "  network-private - no public subnets / no NAT",
+        "  network-3tier  - public + app + isolated data subnets",
+        "  eks-ready / gke-ready / aks-ready - Kubernetes network prep",
+        "  eks-cluster / gke-cluster / aks-cluster - full managed K8s",
+        "  hub-spoke      - hub VPC + multiple spoke networks",
     )
     blueprint = _ask_choice("Blueprint", list(SUPPORTED_BLUEPRINTS), "network")
 
@@ -248,9 +248,9 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
         _explain(
             "NAT lets private subnets reach the internet (updates, APIs) without",
             "exposing those instances with a public IP.",
-            "  none    — no NAT (cheapest; private hosts can't reach the internet)",
-            "  single  — one NAT shared by all AZs (good cost/HA balance for many apps)",
-            "  per_az  — one NAT per AZ (best HA; roughly N× the idle NAT cost)",
+            "  none   - no NAT (cheapest; private hosts can't reach the internet)",
+            "  single - one NAT shared by all AZs (good cost/HA balance for many apps)",
+            "  per_az - one NAT per AZ (best HA; roughly N× the idle NAT cost)",
         )
         nat_mode = _ask_choice("NAT mode", list(NAT_MODES), "single")
         create_public = True
@@ -267,7 +267,7 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     wiz.tick("gateway endpoints")
     _explain(
         "Gateway VPC endpoints (AWS) let traffic to S3 and DynamoDB stay inside AWS",
-        "instead of going through NAT — saves money and improves security.",
+        "instead of going through NAT - saves money and improves security.",
         "On other clouds this is mostly a no-op or future-facing flag.",
     )
     enable_vpc_endpoints = _ask_bool(
@@ -301,8 +301,8 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     if enable_bastion_sg:
         _explain(
             "CIDR blocks allowed to SSH. Examples:",
-            "  10.0.0.0/8          — your private networks",
-            "  203.0.113.10/32    — a single office public IP",
+            "  10.0.0.0/8         - your private networks",
+            "  203.0.113.10/32   - a single office public IP",
             "Comma-separate multiple ranges.",
         )
         ssh_raw = _ask("SSH allow CIDRs (comma-separated)", "10.0.0.0/8")
@@ -370,7 +370,7 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
         azure_subscription_id = _ask("Azure subscription ID (optional)", "")
 
     # ── GitHub / CI identity ──────────────────────────────────
-    _section("GitHub (for CI OIDC — optional)")
+    _section("GitHub (for CI OIDC - optional)")
     wiz.tick("GitHub")
     _explain(
         "If you use GitHub Actions, TerraGen can generate an oidc/ stack so CI",
@@ -475,7 +475,7 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     cfg = TerraGenConfig.from_dict(data)
 
     # ── Summary + confirm ─────────────────────────────────────
-    _section("Summary — review before writing")
+    _section("Summary - review before writing")
     est = cfg.cost_estimate()
     _print(f"  Project:      {cfg.project}")
     _print(f"  Cloud:        {cfg.cloud} / {cfg.region} / env={cfg.environment}")
@@ -509,7 +509,7 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
         else "Generate files with these settings?"
     )
     if not _ask_bool(confirm, True):
-        _print("Cancelled — no files written.")
+        _print("Cancelled - no files written.")
         raise SystemExit(0)
 
     _print()
@@ -571,7 +571,7 @@ def cmd_generate(args: argparse.Namespace) -> int:
         plan = render_project(cfg, outdir, force=args.force, dry_run=True)
         _print(f"  files: {len(plan.files_written)}")
         for f in plan.relative_files:
-            _print(f"    - {f}")
+            _print(f"   - {f}")
         return 0
 
     try:
@@ -817,7 +817,7 @@ def cmd_import(args: argparse.Namespace) -> int:
             _err(
                 "Provide either:\n"
                 "  --inventory path/to/inventory.json   "
-                "(AWS, GCP, or Azure — see examples/inventory-*-sample.json)\n"
+                "(AWS, GCP, or Azure - see examples/inventory-*-sample.json)\n"
                 "  or --cloud aws --vpc-id vpc-xxxxxxxx [--region us-east-1]  "
                 "(live AWS only; needs boto3)"
             )
@@ -971,7 +971,7 @@ def cmd_init_answers(args: argparse.Namespace) -> int:
 
 
 def cmd_version(_: argparse.Namespace) -> int:
-    _print(f"TerraGen {__version__} — Created by {__author__}")
+    _print(f"TerraGen {__version__} - Created by {__author__}")
     return 0
 
 
@@ -979,7 +979,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="terragen",
         description=(
-            "TerraGen — world-class multi-cloud Terraform network generator "
+            "TerraGen - world-class multi-cloud Terraform network generator "
             f"(AWS, GCP, Azure). Created by {__author__}."
         ),
     )
