@@ -1,5 +1,8 @@
 # TerraGen architecture
 
+> **Users:** start with [docs/README.md](README.md) (getting started and how-to guides).  
+> This page is for **contributors** who change how the generator works.
+
 ## Generator pipeline
 
 ```

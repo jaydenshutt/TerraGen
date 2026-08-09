@@ -8,6 +8,17 @@ TerraGen asks a few questions (or reads a YAML/JSON answers file) and emits a pr
 
 Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 
+## Documentation
+
+**Full walkthroughs live in [`docs/`](docs/README.md)** — getting started, interactive mode, answers files, blueprints, layouts, remote state, brownfield import, clusters, hub-spoke, CLI reference, and troubleshooting.
+
+| Start here | |
+|------------|--|
+| [Getting started](docs/getting-started.md) | Install → generate → plan |
+| [Docs index](docs/README.md) | All guides |
+| [CLI reference](docs/cli-reference.md) | Commands and flags |
+| [Brownfield import](docs/brownfield-import.md) | Existing AWS VPC → Terraform |
+
 ---
 
 ## Why TerraGen?
