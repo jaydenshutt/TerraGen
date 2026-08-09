@@ -8,15 +8,23 @@ This is **not** full-account import — it targets the **VPC network surface**.
 
 ### A) Live discovery (AWS)
 
-Needs: AWS credentials + `boto3` (`pip install boto3`).
+Needs: **AWS credentials** (same chain as Terraform/boto3) + `boto3` (`pip install boto3`).  
+Discovery is **read-only** (`Describe*`); it does not create resources.  
+See **[Cloud credentials — AWS](cloud-credentials.md#aws)** (profiles, SSO, env vars, region).
 
 ```bash
+# Confirm identity (optional)
+# aws sts get-caller-identity
+# or: python -c "import boto3; print(boto3.client('sts').get_caller_identity())"
+
 python -m terragen import \
   --cloud aws \
   --vpc-id vpc-0123456789abcdef0 \
   --region us-east-1 \
   --out ./imported
 ```
+
+Use the **region where the VPC lives**. Wrong region → not found / empty discovery.
 
 ### B) Inventory JSON (no live API)
 

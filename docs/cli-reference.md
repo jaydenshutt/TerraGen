@@ -8,6 +8,8 @@ python -m terragen <command> [options]
 terragen <command> [options]
 ```
 
+**Credentials:** most commands are local. Cloud auth is needed for `bootstrap` apply, live `import`, and for `terraform plan`/`apply` on generated code — [Cloud credentials](cloud-credentials.md).
+
 ## Commands
 
 | Command | Description |

@@ -57,6 +57,21 @@ pip install boto3
 
 Or use `--inventory` without live AWS access.
 
+## Auth / credentials errors
+
+Terraform or live import cannot find or use cloud identity:
+
+- Full guide: **[Cloud credentials](cloud-credentials.md)**  
+- AWS: check `AWS_PROFILE` / SSO session / `aws sts get-caller-identity`  
+- GCP: ADC + `gcp_project_id` in answers  
+- Azure: `az account show` and correct subscription  
+- Generate does **not** need credentials; `plan` / `apply` / bootstrap / live import do  
+
+## Import: boto3 works but wrong VPC / empty
+
+- Pass `--region` for the VPC’s region (not only your default profile region)  
+- Confirm account: `aws sts get-caller-identity` or boto3 STS
+
 ## Import: large plan after first import
 
 Normal for brownfield. Align tags, SG rules, and optional attributes; re-plan. See [brownfield import](brownfield-import.md).

@@ -14,10 +14,15 @@ We **do** hope this tool helps you accelerate solid multi-cloud networking and I
 
 - **Python 3.10+**
 - **Terraform ≥ 1.5** (or OpenTofu 1.6+)
-- Cloud credentials configured for the provider you choose (optional until `apply`):
-  - AWS: `aws configure` or environment variables / SSO
-  - GCP: `gcloud auth application-default login` + project
-  - Azure: `az login`
+- **Cloud credentials** — **not** required for `generate`; **required** for `terraform plan` / `apply`, `bootstrap`, and live AWS `import`
+
+| Cloud | Typical local login |
+|-------|---------------------|
+| AWS | `aws configure` / SSO profile, or env vars (`AWS_PROFILE`, …) |
+| GCP | `gcloud auth application-default login` + real `gcp_project_id` |
+| Azure | `az login` + correct subscription |
+
+Full guide (when you need auth, env vars, SSO, OIDC CI, Windows): **[Cloud credentials](cloud-credentials.md)**.
 
 ## 1. Install TerraGen
 
@@ -114,6 +119,8 @@ Details: [Remote state & bootstrap](bootstrap-and-state.md).
 
 ## 5. Initialize and plan the network
 
+This step uses **your cloud credentials** (Terraform provider default chain). Confirm login first if needed: [Cloud credentials](cloud-credentials.md).
+
 ```bash
 # With remote backend configured:
 terraform init
@@ -147,9 +154,10 @@ python -m terragen generate \
 
 ## Next steps
 
+- [Cloud credentials](cloud-credentials.md) — AWS / GCP / Azure and CI OIDC
 - Choose a richer [blueprint](blueprints.md) (private-only, EKS, hub-spoke, …)
 - Use [modular layout](layouts.md) for multi-environment repos
-- Wire [OIDC CI](cli-reference.md) from the generated `oidc/` folder
+- Wire [OIDC CI](cloud-credentials.md#local-laptop-vs-github-actions-oidc) from the generated `oidc/` folder
 - Adopt an existing VPC: [Brownfield import](brownfield-import.md)
 
 ## Safety notes

@@ -9,6 +9,9 @@ Remote backends (S3, GCS, Azure Storage) must **exist before** Terraform can sto
 
 ## Typical flow
 
+Bootstrap **apply** needs cloud credentials for the target provider
+([Cloud credentials](cloud-credentials.md)). Generate itself does not.
+
 ```bash
 # 1. Generate with backend + bootstrap enabled (default)
 python -m terragen generate -a answers.yaml -o ./net --force

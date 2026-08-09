@@ -5,6 +5,7 @@ User-facing guides for installing, generating, deploying, and adopting Terraform
 | Guide | Description |
 |-------|-------------|
 | [Getting started](getting-started.md) | Install, first generate, first `terraform plan` |
+| [Cloud credentials](cloud-credentials.md) | AWS / GCP / Azure auth — when needed, local vs CI OIDC |
 | [Interactive mode](interactive-mode.md) | Wizard questions explained end-to-end |
 | [Answers files](answers-file.md) | YAML/JSON schema, examples, automation |
 | [Blueprints](blueprints.md) | Network, private, 3-tier, K8s-ready, clusters, hub-spoke |
@@ -17,7 +18,7 @@ User-facing guides for installing, generating, deploying, and adopting Terraform
 | [Troubleshooting](troubleshooting.md) | Common errors and fixes |
 | [Architecture](ARCHITECTURE.md) | How the generator is built (contributors) |
 
-**Quick path:** [Getting started](getting-started.md) → pick a [blueprint](blueprints.md) → [bootstrap state](bootstrap-and-state.md) → `terraform apply`.
+**Quick path:** [Getting started](getting-started.md) → [cloud credentials](cloud-credentials.md) (before plan/apply) → pick a [blueprint](blueprints.md) → [bootstrap state](bootstrap-and-state.md) → `terraform apply`.
 
 Also see the root [README](../README.md) and [examples/](../examples/).
 

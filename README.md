@@ -15,6 +15,7 @@ Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 | Start here | |
 |------------|--|
 | [Getting started](docs/getting-started.md) | Install → generate → plan |
+| [Cloud credentials](docs/cloud-credentials.md) | AWS / GCP / Azure auth (local + CI OIDC) |
 | [Docs index](docs/README.md) | All guides |
 | [CLI reference](docs/cli-reference.md) | Commands and flags |
 | [Brownfield import](docs/brownfield-import.md) | Existing AWS VPC → Terraform |
@@ -74,6 +75,8 @@ python -m terragen generate -a examples/answers-aws.yaml -o ./my-network --force
 ```
 
 > **Windows tip:** if `terragen` is not on PATH, always use `python -m terragen …`.
+
+**Credentials:** `generate` is local-only. Configure AWS / GCP / Azure before `terraform plan` / `apply`, bootstrap, or live import — see **[Cloud credentials](docs/cloud-credentials.md)**.
 
 ---
 
@@ -182,7 +185,7 @@ security groups, network ACLs, and VPC endpoints**, then writes Terraform 1.5+
 `import` blocks plus matching resources.
 
 ```bash
-# Live discovery (needs AWS creds + boto3)
+# Live discovery (needs AWS creds + boto3; read-only API — see docs/cloud-credentials.md)
 python -m terragen import --cloud aws --vpc-id vpc-0abc123 --region us-east-1 --out ./imported
 
 # Or from a JSON inventory (see examples/inventory-aws-sample.json)
