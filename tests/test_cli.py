@@ -10,7 +10,9 @@ from terragen.cli import main
 
 def test_version(capsys):
     assert main(["version"]) == 0
-    assert "TerraGen" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "TerraGen" in out
+    assert "Created by Jayden Shutt" in out
 
 
 def test_blueprints(capsys):

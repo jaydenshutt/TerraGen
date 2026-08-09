@@ -5,4 +5,4 @@ __author__ = "Jayden Shutt"
 
 from terragen.config import TerraGenConfig
 
-__all__ = ["TerraGenConfig", "__version__"]
+__all__ = ["TerraGenConfig", "__version__", "__author__"]

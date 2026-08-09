@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from terragen import __version__
+from terragen import __author__, __version__
 from terragen.blueprints import describe_blueprint, list_blueprints
 from terragen.bootstrap_cmd import ensure_bootstrap_generated, find_bootstrap_dir, run_bootstrap
 from terragen.config import (
@@ -108,7 +108,7 @@ def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     _print()
     _print("=" * 62)
     _print("  TerraGen — multi-cloud Terraform network generator")
-    _print(f"  v{__version__}")
+    _print(f"  v{__version__}  ·  Created by {__author__}")
     _print("=" * 62)
     _print()
     if answers_only:
@@ -943,14 +943,17 @@ def cmd_init_answers(args: argparse.Namespace) -> int:
 
 
 def cmd_version(_: argparse.Namespace) -> int:
-    _print(f"TerraGen {__version__}")
+    _print(f"TerraGen {__version__} — Created by {__author__}")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="terragen",
-        description="TerraGen — world-class multi-cloud Terraform network generator (AWS, GCP, Azure)",
+        description=(
+            "TerraGen — world-class multi-cloud Terraform network generator "
+            f"(AWS, GCP, Azure). Created by {__author__}."
+        ),
     )
     parser.add_argument("--version", action="store_true", help="Show version and exit")
 

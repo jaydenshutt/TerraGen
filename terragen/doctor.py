@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
-from terragen import __version__
+from terragen import __author__, __version__
 from terragen.render import TEMPLATES_DIR
 
 
@@ -58,7 +58,8 @@ def run_doctor(project_dir: Optional[Path] = None) -> DoctorReport:
     report.add(
         "terragen",
         True,
-        f"version {__version__} on Python {sys.version.split()[0]} ({platform.system()})",
+        f"version {__version__} on Python {sys.version.split()[0]} ({platform.system()})"
+        f" — Created by {__author__}",
     )
 
     # Dependencies
