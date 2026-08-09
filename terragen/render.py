@@ -197,9 +197,10 @@ def _render_one(
     except Exception as e:
         try:
             tpl = env.get_template(Path(tpl_name).name)
-        except Exception:
-            result.skipped.append(f"{tpl_name} ({e})")
-            return
+        except Exception as e2:
+            raise RuntimeError(
+                f"Template not found or unloadable: {tpl_name} ({e2})"
+            ) from e2
     rendered = tpl.render(**ctx)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(rendered, encoding="utf-8")
@@ -214,16 +215,26 @@ def render_project(
     dry_run: bool = False,
 ) -> RenderResult:
     """Render a full Terraform project for the given config."""
+    import shutil
+
     outdir = Path(outdir)
     result = RenderResult(output_dir=outdir)
 
-    if outdir.exists() and any(outdir.iterdir()) and not force and not dry_run:
+    # Always require --force to overwrite any non-empty directory (safer + consistent CLI).
+    # On force, wipe the directory so renamed files (network.tf → main.tf) do not linger.
+    if outdir.exists() and any(outdir.iterdir()) and not dry_run:
         marker = outdir / ".terragen-generated"
-        if not marker.exists():
+        if not force:
+            if marker.exists():
+                raise FileExistsError(
+                    f"Output directory '{outdir}' already contains a TerraGen project. "
+                    "Use --force to overwrite, or choose another --out path."
+                )
             raise FileExistsError(
                 f"Output directory '{outdir}' already exists and is not a TerraGen project. "
                 "Use --force to overwrite, or choose another --out path."
             )
+        shutil.rmtree(outdir)
 
     env = _build_env(
         [

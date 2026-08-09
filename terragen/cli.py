@@ -827,7 +827,9 @@ def cmd_import(args: argparse.Namespace) -> int:
             _print(json.dumps(disc.to_dict(), indent=2))
             return 0
 
-        written = generate_import_project(disc, outdir)
+        written = generate_import_project(
+            disc, outdir, force=bool(getattr(args, "force", False))
+        )
         counts = disc.summary_counts()
         _print(f"✓ Brownfield import project written to: {outdir}")
         _print(
@@ -1094,6 +1096,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="JSON inventory file (from prior discovery or hand-written)",
     )
     imp.add_argument("--out", "-o", default="./imported-network", help="Output directory")
+    imp.add_argument(
+        "--force",
+        "-f",
+        action="store_true",
+        help="Overwrite output directory (always cleans previous import output)",
+    )
     imp.add_argument(
         "--dry-run",
         action="store_true",

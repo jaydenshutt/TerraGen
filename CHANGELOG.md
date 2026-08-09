@@ -9,6 +9,8 @@
   - Import projects: `vpc.tf` / `network.tf` → **`main.tf`**; split **`providers.tf`** + **`terraform.tf`**
 - Domain files (`security.tf`, `cluster.tf`, …) kept for large multi-cloud stacks
 - Docs + generated README describe the standard layout
+- **Safer overwrite:** `generate` requires `--force` for any non-empty `--out` (including prior TerraGen projects) and wipes the directory on force so obsolete filenames cannot linger
+- **Import:** `--force` flag; re-import into a TerraGen import dir cleans the tree; missing templates fail hard instead of silent skip
 
 ## 3.0.2 — 2026-08-09
 

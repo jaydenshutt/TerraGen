@@ -126,6 +126,18 @@ def test_cli_import_gcp_inventory(tmp_path):
     assert rc == 0
     assert (out / "main.tf").exists()
     assert "google_compute_network" in (out / "main.tf").read_text(encoding="utf-8")
+    # Re-import cleans and rewrites without requiring --force for our marker
+    rc2 = main(
+        [
+            "import",
+            "--inventory",
+            str(EXAMPLES / "inventory-gcp-sample.json"),
+            "--out",
+            str(out),
+        ]
+    )
+    assert rc2 == 0
+    assert (out / "main.tf").exists()
 
 
 def test_cli_import_azure_inventory(tmp_path):
@@ -142,6 +154,18 @@ def test_cli_import_azure_inventory(tmp_path):
     assert rc == 0
     assert (out / "main.tf").exists()
     assert "azurerm_virtual_network" in (out / "main.tf").read_text(encoding="utf-8")
+
+
+def test_import_refuses_foreign_directory(tmp_path):
+    out = tmp_path / "foreign"
+    out.mkdir()
+    (out / "notes.txt").write_text("user data", encoding="utf-8")
+    disc = load_inventory(EXAMPLES / "inventory-aws-sample.json")
+    with pytest.raises(FileExistsError):
+        generate_import_project(disc, out, force=False)
+    generate_import_project(disc, out, force=True)
+    assert (out / "main.tf").exists()
+    assert not (out / "notes.txt").exists()
 
 
 @pytest.mark.terraform

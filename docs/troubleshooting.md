@@ -17,11 +17,13 @@ python -m pip install -e .
 ## Generation fails: output directory exists
 
 ```
-FileExistsError: ... not a TerraGen project
+FileExistsError: ... already contains a TerraGen project
+# or
+FileExistsError: ... already exists and is not a TerraGen project
 ```
 
-- Use a new `--out` path, or  
-- `--force` only if the folder has `.terragen-generated` (TerraGen project) or you accept overwrite of a marked project.
+- Use a **new** `--out` path, or  
+- Pass **`--force`** to wipe and regenerate that directory (required for any non-empty folder, including prior TerraGen output).
 
 ## Validation errors on project name
 

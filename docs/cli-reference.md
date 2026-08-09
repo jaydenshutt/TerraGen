@@ -65,6 +65,7 @@ terragen <command> [options]
 | `--vpc-id` | AWS VPC id (live path) |
 | `--region` | Region for live discovery |
 | `-o` / `--out` | Output directory |
+| `-f` / `--force` | Overwrite output directory |
 | `--dry-run` | Print inventory JSON only (live path) |
 
 See [brownfield-import.md](brownfield-import.md) for inventory schemas and samples.

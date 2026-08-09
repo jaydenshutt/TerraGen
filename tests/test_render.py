@@ -138,8 +138,27 @@ def test_force_overwrite(tmp_out):
     out = tmp_out / "regen"
     cfg = TerraGenConfig.from_dict({"project": "demo-y", "cloud": "aws"})
     render_project(cfg, out, force=True)
-    render_project(cfg, out, force=True)  # marker present; force also ok
+    # Re-generate requires --force even for TerraGen projects
+    with pytest.raises(FileExistsError):
+        render_project(cfg, out, force=False)
+    render_project(cfg, out, force=True)
     assert (out / ".terragen-generated").exists()
+    assert (out / "main.tf").exists()
+    assert not (out / "network.tf").exists()
+
+
+def test_force_clears_legacy_filenames(tmp_out):
+    """Force regenerate must not leave obsolete network.tf / versions.tf behind."""
+    out = tmp_out / "legacy-names"
+    cfg = TerraGenConfig.from_dict({"project": "demo-leg", "cloud": "aws"})
+    render_project(cfg, out, force=True)
+    (out / "network.tf").write_text("# obsolete leftover\n", encoding="utf-8")
+    (out / "versions.tf").write_text("# obsolete leftover\n", encoding="utf-8")
+    render_project(cfg, out, force=True)
+    assert (out / "main.tf").exists()
+    assert (out / "terraform.tf").exists()
+    assert not (out / "network.tf").exists()
+    assert not (out / "versions.tf").exists()
 
 
 def test_dry_run_writes_nothing(tmp_out):

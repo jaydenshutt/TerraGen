@@ -585,9 +585,36 @@ def load_inventory(path: Path) -> DiscoveredNetwork:
     )
 
 
-def generate_import_project(disc: DiscoveredNetwork, outdir: Path) -> List[Path]:
+def generate_import_project(
+    disc: DiscoveredNetwork,
+    outdir: Path,
+    *,
+    force: bool = False,
+) -> List[Path]:
     """Write brownfield Terraform project with import blocks + resources."""
+    import shutil
+
     outdir = Path(outdir)
+    if outdir.exists() and any(outdir.iterdir()):
+        marker = outdir / ".terragen-generated"
+        is_ours = False
+        if marker.exists():
+            try:
+                meta = json.loads(marker.read_text(encoding="utf-8"))
+                is_ours = meta.get("mode") == "brownfield-import" or meta.get(
+                    "generator"
+                ) == "TerraGen"
+            except Exception:
+                is_ours = True  # marker present; treat as regenerable
+        if not force and not is_ours:
+            raise FileExistsError(
+                f"Output directory '{outdir}' already exists. "
+                "Use --force to overwrite, or choose another --out path."
+            )
+        if force or is_ours:
+            # Clean slate so renamed files (e.g. network.tf → main.tf) do not linger
+            shutil.rmtree(outdir)
+
     outdir.mkdir(parents=True, exist_ok=True)
     written: List[Path] = []
 
