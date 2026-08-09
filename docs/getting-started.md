@@ -2,6 +2,14 @@
 
 This walkthrough takes you from a clean machine to a Terraform plan for a cloud network.
 
+## Disclaimer (read before you apply)
+
+TerraGen is provided **as-is**, **without warranty of any kind**. You use it **at your own risk**.
+
+Generated projects can create real cloud resources that cost money and affect production if you apply them carelessly. Always review `terraform plan` (and security/IAM/network exposure) before apply. The authors take **no responsibility** for outcomes in your accounts.
+
+We **do** hope this tool helps you accelerate solid multi-cloud networking and IaC setup. Full legal terms: [LICENSE](../LICENSE). Plain-language summary: [README — Disclaimer](../README.md#disclaimer).
+
 ## Prerequisites
 
 - **Python 3.10+**

@@ -353,8 +353,20 @@ cd /tmp/tg && terraform init -backend=false && terraform validate
 
 ---
 
+## Disclaimer
+
+TerraGen is provided **as-is** under the [MIT License](LICENSE), **without warranty of any kind** (express or implied), including merchantability, fitness for a particular purpose, and noninfringement.
+
+**You use this tool at your own risk.** Generated Terraform is a starting point only. Before you `plan` or `apply` in any account:
+
+- Review every resource, IAM policy, network exposure, and cost implication
+- Treat blueprints as accelerators—not certified production designs for your environment
+- Brownfield import and discovery can be imperfect; expect drift and manual fixes
+
+The authors and contributors accept **no responsibility** for cloud spend, outages, security incidents, data loss, compliance outcomes, or any other consequences of using TerraGen or the code it generates.
+
+We still **hope TerraGen helps you accelerate** multi-cloud networking and infrastructure-as-code—so you can spend less time on boilerplate and more time on what you are building.
+
 ## License
 
-MIT — see [LICENSE](LICENSE).
-
-Generated infrastructure is a starting point: review plans, IAM, and network exposure before production use.
+MIT — see [LICENSE](LICENSE) for the full legal text (including the “AS IS” and limitation of liability clauses).

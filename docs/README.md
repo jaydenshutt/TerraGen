@@ -20,3 +20,7 @@ User-facing guides for installing, generating, deploying, and adopting Terraform
 **Quick path:** [Getting started](getting-started.md) → pick a [blueprint](blueprints.md) → [bootstrap state](bootstrap-and-state.md) → `terraform apply`.
 
 Also see the root [README](../README.md) and [examples/](../examples/).
+
+### Disclaimer
+
+TerraGen is provided **as-is**, **without warranty**, and is used **at your own risk**. Authors accept **no responsibility** for cloud cost, outages, or security outcomes. Review every plan before apply. We hope it still helps you move faster—see [README — Disclaimer](../README.md#disclaimer), [Getting started](getting-started.md#disclaimer-read-before-you-apply), and [LICENSE](../LICENSE).
