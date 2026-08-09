@@ -50,6 +50,51 @@ def test_hub_spoke_config():
     assert len(cfg.spoke_cidrs) == 2
 
 
+def test_hub_spoke_invalid_spoke_count():
+    """spoke_count=0 should not crash from_dict; validate reports an error."""
+    cfg = TerraGenConfig.from_dict(
+        {
+            "project": "demo-hub-bad",
+            "blueprint": "hub-spoke",
+            "spoke_count": 0,
+            "hub_cidr": "10.0.0.0/16",
+        }
+    )
+    result = validate_config(cfg)
+    assert not result.ok
+    assert any("spoke_count" in e for e in result.errors)
+
+
+def test_cluster_blueprint_resets_unknown_region():
+    """eks-cluster forces AWS and replaces a GCP region with an AWS default."""
+    cfg = TerraGenConfig.from_dict(
+        {
+            "project": "demo-eks-reg",
+            "cloud": "gcp",
+            "region": "us-central1",
+            "blueprint": "eks-cluster",
+        }
+    )
+    assert cfg.cloud == "aws"
+    assert cfg.region == "us-east-1"
+    assert validate_config(cfg).ok
+
+
+def test_cluster_node_size_validation():
+    cfg = TerraGenConfig.from_dict(
+        {
+            "project": "demo-eks-nodes",
+            "blueprint": "eks-cluster",
+            "node_min_size": 3,
+            "node_desired_size": 1,
+            "node_max_size": 2,
+        }
+    )
+    result = validate_config(cfg)
+    assert not result.ok
+    assert any("node_desired_size" in e for e in result.errors)
+
+
 def test_ipv6_flag():
     cfg = TerraGenConfig.from_dict(
         {"project": "demo-v6", "cloud": "aws", "enable_ipv6": True}

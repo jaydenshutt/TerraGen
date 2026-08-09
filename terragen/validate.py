@@ -204,4 +204,49 @@ def validate_config(cfg: TerraGenConfig) -> ValidationResult:
             "Consider nat_mode=single for non-prod."
         )
 
+    # Hub-and-spoke
+    if cfg.enable_hub_spoke or cfg.blueprint == "hub-spoke":
+        if cfg.spoke_count < 1 or cfg.spoke_count > 16:
+            result.errors.append("spoke_count must be between 1 and 16")
+        if cfg.hub_spoke_connectivity not in ("tgw", "peering"):
+            result.errors.append(
+                f"Invalid hub_spoke_connectivity '{cfg.hub_spoke_connectivity}'. "
+                "Choose tgw or peering (AWS); GCP/Azure always use peering."
+            )
+        if cfg.cloud != "aws" and cfg.hub_spoke_connectivity == "tgw":
+            result.warnings.append(
+                f"hub_spoke_connectivity=tgw is AWS-only; "
+                f"{cfg.cloud.upper()} templates use VPC/VNet peering."
+            )
+        if cfg.spoke_cidrs and len(cfg.spoke_cidrs) < cfg.spoke_count:
+            result.errors.append(
+                f"spoke_cidrs has {len(cfg.spoke_cidrs)} entries but spoke_count={cfg.spoke_count}"
+            )
+        try:
+            hub = ipaddress.ip_network(cfg.hub_cidr or cfg.vpc_cidr, strict=False)
+            if hub.version != 4:
+                result.errors.append("hub_cidr must be IPv4")
+        except ValueError as e:
+            result.errors.append(f"Invalid hub_cidr: {e}")
+
+    # Managed cluster node pool sizing
+    if cfg.enable_cluster:
+        if cfg.node_min_size < 0 or cfg.node_max_size < 1:
+            result.errors.append("node_min_size must be >= 0 and node_max_size >= 1")
+        if cfg.node_min_size > cfg.node_max_size:
+            result.errors.append(
+                f"node_min_size ({cfg.node_min_size}) cannot exceed "
+                f"node_max_size ({cfg.node_max_size})"
+            )
+        if not (cfg.node_min_size <= cfg.node_desired_size <= cfg.node_max_size):
+            result.errors.append(
+                f"node_desired_size ({cfg.node_desired_size}) must be between "
+                f"node_min_size ({cfg.node_min_size}) and node_max_size ({cfg.node_max_size})"
+            )
+        if not (cfg.cluster_name or "").strip():
+            result.warnings.append(
+                "enable_cluster is true but cluster_name is empty "
+                "(TerraGen will default to <project>-<env>-k8s)"
+            )
+
     return result

@@ -2,25 +2,43 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jaydenshutt/TerraGen/schemas/answers.schema.json",
   "title": "TerraGen Answers",
-  "description": "Configuration for generating a multi-cloud Terraform network project. Prefer: terragen schema -o answers.schema.json",
+  "description": "Configuration for generating a multi-cloud Terraform network project. Regenerate committed copy with: python -m terragen schema -o schemas/answers.schema.json",
   "type": "object",
   "additionalProperties": true,
   "properties": {
     "project": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9-]{1,38}[a-z0-9]$"
+      "pattern": "^[a-z][a-z0-9-]{1,38}[a-z0-9]$",
+      "description": "Project slug used for resource naming"
     },
     "cloud": {
       "type": "string",
-      "enum": ["aws", "gcp", "azure"]
+      "enum": [
+        "aws",
+        "gcp",
+        "azure"
+      ]
     },
-    "region": { "type": "string" },
-    "environment": { "type": "string" },
+    "region": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment": {
+      "type": "string"
+    },
     "environments": {
       "oneOf": [
-        { "type": "array", "items": { "type": "string" } },
-        { "type": "string" }
-      ]
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Modular layout: list of env roots to generate"
     },
     "blueprint": {
       "type": "string",
@@ -39,43 +57,285 @@
         "hub-spoke"
       ]
     },
-    "enable_ipv6": { "type": "boolean" },
-    "enable_cluster": { "type": "boolean" },
-    "cluster_name": { "type": "string" },
-    "enable_hub_spoke": { "type": "boolean" },
-    "spoke_count": { "type": "integer", "minimum": 1, "maximum": 16 },
-    "hub_cidr": { "type": "string" },
-    "hub_spoke_connectivity": { "type": "string", "enum": ["tgw", "peering"] },
     "layout": {
       "type": "string",
-      "enum": ["flat", "modular"]
+      "enum": [
+        "flat",
+        "modular"
+      ]
     },
-    "vpc_cidr": { "type": "string" },
-    "az_count": { "type": "integer", "minimum": 1, "maximum": 6 },
+    "vpc_cidr": {
+      "type": "string"
+    },
+    "az_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6
+    },
+    "public_subnets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "private_subnets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "isolated_subnets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "enable_isolated_subnets": {
+      "type": "boolean"
+    },
     "nat_mode": {
       "type": "string",
-      "enum": ["none", "single", "per_az"]
+      "enum": [
+        "none",
+        "single",
+        "per_az"
+      ]
     },
-    "private_only": { "type": "boolean" },
-    "create_public_subnets": { "type": "boolean" },
-    "enable_flow_logs": { "type": "boolean" },
-    "enable_vpc_endpoints": { "type": "boolean" },
-    "enable_interface_endpoints": { "type": "boolean" },
+    "private_only": {
+      "type": "boolean",
+      "description": "Shorthand: nat_mode=none + no public subnets + endpoints"
+    },
+    "create_public_subnets": {
+      "type": "boolean"
+    },
+    "enable_flow_logs": {
+      "type": "boolean"
+    },
+    "enable_vpc_endpoints": {
+      "type": "boolean"
+    },
+    "enable_interface_endpoints": {
+      "type": "boolean"
+    },
     "interface_endpoints": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
-    "enable_backend": { "type": "boolean" },
-    "enable_bootstrap": { "type": "boolean" },
-    "generate_ci": { "type": "boolean" },
-    "generate_policies": { "type": "boolean" },
-    "generate_oidc": { "type": "boolean" },
-    "github_org": { "type": "string" },
-    "github_repo": { "type": "string" },
-    "gcp_project_id": { "type": "string" },
+    "enable_ipv6": {
+      "type": "boolean",
+      "description": "IPv6 dual-stack on VPC/subnets (generate-time Jinja)"
+    },
+    "ipv6_only": {
+      "type": "boolean",
+      "description": "Reserved; dual-stack is used when enable_ipv6 is true"
+    },
+    "enable_eks_subnet_tags": {
+      "type": "boolean"
+    },
+    "enable_gke_secondary_ranges": {
+      "type": "boolean"
+    },
+    "gke_pod_cidrs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gke_service_cidrs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "enable_aks_tags": {
+      "type": "boolean"
+    },
+    "enable_cluster": {
+      "type": "boolean"
+    },
+    "cluster_name": {
+      "type": "string"
+    },
+    "cluster_version": {
+      "type": "string",
+      "description": "K8s version (empty = blueprint default, e.g. 1.29)"
+    },
+    "node_instance_type": {
+      "type": "string"
+    },
+    "node_desired_size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "node_min_size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "node_max_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cluster_private_endpoint": {
+      "type": "boolean"
+    },
+    "enable_hub_spoke": {
+      "type": "boolean"
+    },
+    "hub_cidr": {
+      "type": "string"
+    },
+    "spoke_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16
+    },
+    "spoke_cidrs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hub_spoke_connectivity": {
+      "type": "string",
+      "enum": [
+        "tgw",
+        "peering"
+      ],
+      "description": "AWS: tgw (default) or peering; GCP/Azure use peering"
+    },
+    "enable_bastion_sg": {
+      "type": "boolean"
+    },
+    "ssh_cidrs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "enable_guardduty": {
+      "type": "boolean"
+    },
+    "enable_security_center": {
+      "type": "boolean"
+    },
+    "enable_nsg_defaults": {
+      "type": "boolean"
+    },
+    "enable_billing_alerts": {
+      "type": "boolean"
+    },
+    "billing_thresholds": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "alert_emails": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "email"
+      }
+    },
+    "enable_backend": {
+      "type": "boolean"
+    },
+    "enable_bootstrap": {
+      "type": "boolean"
+    },
+    "generate_ci": {
+      "type": "boolean"
+    },
+    "generate_policies": {
+      "type": "boolean"
+    },
+    "generate_oidc": {
+      "type": "boolean"
+    },
+    "github_org": {
+      "type": "string"
+    },
+    "github_repo": {
+      "type": "string"
+    },
+    "provider_version_aws": {
+      "type": "string"
+    },
+    "provider_version_gcp": {
+      "type": "string"
+    },
+    "provider_version_azure": {
+      "type": "string"
+    },
+    "terraform_version": {
+      "type": "string"
+    },
+    "terraform_binary": {
+      "type": "string",
+      "description": "terraform or tofu (used by --validate / bootstrap)"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "cost_center": {
+      "type": "string"
+    },
+    "gcp_project_id": {
+      "type": "string"
+    },
+    "azure_subscription_id": {
+      "type": "string"
+    },
     "tags": {
       "type": "object",
-      "additionalProperties": { "type": "string" }
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "managed_by": {
+      "type": "string"
     }
-  }
+  },
+  "required": [],
+  "examples": [
+    {
+      "project": "demo-aws",
+      "cloud": "aws",
+      "region": "us-east-1",
+      "environment": "dev",
+      "blueprint": "network",
+      "layout": "modular",
+      "environments": [
+        "dev",
+        "staging",
+        "prod"
+      ],
+      "vpc_cidr": "10.0.0.0/16",
+      "az_count": 2,
+      "nat_mode": "single"
+    },
+    {
+      "project": "demo-eks",
+      "cloud": "aws",
+      "region": "us-east-1",
+      "blueprint": "eks-cluster",
+      "az_count": 2,
+      "enable_cluster": true,
+      "cluster_version": "1.29",
+      "node_desired_size": 2,
+      "node_min_size": 1,
+      "node_max_size": 4
+    },
+    {
+      "project": "demo-hub",
+      "cloud": "aws",
+      "region": "us-east-1",
+      "blueprint": "hub-spoke",
+      "hub_cidr": "10.0.0.0/16",
+      "spoke_count": 2,
+      "hub_spoke_connectivity": "tgw"
+    }
+  ]
 }

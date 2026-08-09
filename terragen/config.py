@@ -16,7 +16,7 @@ from terragen.cidrs import (
     compute_three_tier_cidrs,
     validate_custom_subnets,
 )
-from terragen.regions import default_region, estimate_nat_monthly_usd
+from terragen.regions import default_region, estimate_nat_monthly_usd, is_known_region
 
 SUPPORTED_CLOUDS = ("aws", "gcp", "azure")
 SUPPORTED_BLUEPRINTS = (
@@ -269,7 +269,10 @@ class TerraGenConfig:
                 self.az_count = 2
 
         elif bp == "eks-cluster":
+            prev_cloud = self.cloud
             self.cloud = "aws"
+            if prev_cloud != "aws" and not is_known_region("aws", self.region):
+                self.region = default_region("aws")
             if self.nat_mode != "none":
                 self.nat_mode = "per_az"
             self.create_public_subnets = True
@@ -287,7 +290,10 @@ class TerraGenConfig:
                 self.node_instance_type = "t3.medium"
 
         elif bp == "gke-cluster":
+            prev_cloud = self.cloud
             self.cloud = "gcp"
+            if prev_cloud != "gcp" and not is_known_region("gcp", self.region):
+                self.region = default_region("gcp")
             if self.nat_mode == "none":
                 self.nat_mode = "single"
             self.create_public_subnets = True
@@ -302,7 +308,10 @@ class TerraGenConfig:
                 self.node_instance_type = "e2-medium"
 
         elif bp == "aks-cluster":
+            prev_cloud = self.cloud
             self.cloud = "azure"
+            if prev_cloud != "azure" and not is_known_region("azure", self.region):
+                self.region = default_region("azure")
             if self.nat_mode != "none":
                 self.nat_mode = "per_az"
             self.create_public_subnets = True
@@ -354,6 +363,9 @@ class TerraGenConfig:
 
     def _ensure_spoke_cidrs(self) -> None:
         if not self.enable_hub_spoke:
+            return
+        # Defer invalid counts to validate_config (avoid hard crash in from_dict)
+        if self.spoke_count < 1 or self.spoke_count > 16:
             return
         if self.spoke_cidrs and len(self.spoke_cidrs) >= self.spoke_count:
             self.spoke_cidrs = self.spoke_cidrs[: self.spoke_count]

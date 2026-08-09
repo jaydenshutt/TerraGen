@@ -76,6 +76,28 @@ def test_schema_write(tmp_path):
     assert schema["properties"]["layout"]["enum"] == ["flat", "modular"]
 
 
+def test_schema_covers_v3_fields():
+    """JSON Schema should document cluster / hub-spoke / IPv6 answers keys."""
+    props = answers_schema()["properties"]
+    for key in (
+        "enable_ipv6",
+        "enable_cluster",
+        "cluster_name",
+        "cluster_version",
+        "node_desired_size",
+        "node_min_size",
+        "node_max_size",
+        "enable_hub_spoke",
+        "spoke_count",
+        "hub_cidr",
+        "hub_spoke_connectivity",
+        "isolated_subnets",
+        "enable_isolated_subnets",
+        "private_only",
+    ):
+        assert key in props, f"missing schema property: {key}"
+
+
 def test_cli_schema(capsys):
     assert main(["schema"]) == 0
     assert "TerraGen Answers" in capsys.readouterr().out

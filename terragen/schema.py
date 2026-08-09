@@ -21,10 +21,14 @@ def answers_schema() -> Dict[str, Any]:
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "https://github.com/jaydenshutt/TerraGen/schemas/answers.schema.json",
         "title": "TerraGen Answers",
-        "description": "Configuration for generating a multi-cloud Terraform network project",
+        "description": (
+            "Configuration for generating a multi-cloud Terraform network project. "
+            "Regenerate committed copy with: python -m terragen schema -o schemas/answers.schema.json"
+        ),
         "type": "object",
         "additionalProperties": True,
         "properties": {
+            # Core identity
             "project": {
                 "type": "string",
                 "pattern": "^[a-z][a-z0-9-]{1,38}[a-z0-9]$",
@@ -42,10 +46,14 @@ def answers_schema() -> Dict[str, Any]:
             },
             "blueprint": {"type": "string", "enum": list(SUPPORTED_BLUEPRINTS)},
             "layout": {"type": "string", "enum": list(LAYOUTS)},
+            # Address space
             "vpc_cidr": {"type": "string"},
             "az_count": {"type": "integer", "minimum": 1, "maximum": 6},
             "public_subnets": {"type": "array", "items": {"type": "string"}},
             "private_subnets": {"type": "array", "items": {"type": "string"}},
+            "isolated_subnets": {"type": "array", "items": {"type": "string"}},
+            "enable_isolated_subnets": {"type": "boolean"},
+            # Networking options
             "nat_mode": {"type": "string", "enum": list(NAT_MODES)},
             "private_only": {
                 "type": "boolean",
@@ -56,16 +64,59 @@ def answers_schema() -> Dict[str, Any]:
             "enable_vpc_endpoints": {"type": "boolean"},
             "enable_interface_endpoints": {"type": "boolean"},
             "interface_endpoints": {"type": "array", "items": {"type": "string"}},
+            "enable_ipv6": {
+                "type": "boolean",
+                "description": "IPv6 dual-stack on VPC/subnets (generate-time Jinja)",
+            },
+            "ipv6_only": {
+                "type": "boolean",
+                "description": "Reserved; dual-stack is used when enable_ipv6 is true",
+            },
+            # Kubernetes network prep
+            "enable_eks_subnet_tags": {"type": "boolean"},
+            "enable_gke_secondary_ranges": {"type": "boolean"},
+            "gke_pod_cidrs": {"type": "array", "items": {"type": "string"}},
+            "gke_service_cidrs": {"type": "array", "items": {"type": "string"}},
+            "enable_aks_tags": {"type": "boolean"},
+            # Full managed clusters
+            "enable_cluster": {"type": "boolean"},
+            "cluster_name": {"type": "string"},
+            "cluster_version": {
+                "type": "string",
+                "description": "K8s version (empty = blueprint default, e.g. 1.29)",
+            },
+            "node_instance_type": {"type": "string"},
+            "node_desired_size": {"type": "integer", "minimum": 0},
+            "node_min_size": {"type": "integer", "minimum": 0},
+            "node_max_size": {"type": "integer", "minimum": 1},
+            "cluster_private_endpoint": {"type": "boolean"},
+            # Hub-and-spoke
+            "enable_hub_spoke": {"type": "boolean"},
+            "hub_cidr": {"type": "string"},
+            "spoke_count": {"type": "integer", "minimum": 1, "maximum": 16},
+            "spoke_cidrs": {"type": "array", "items": {"type": "string"}},
+            "hub_spoke_connectivity": {
+                "type": "string",
+                "enum": ["tgw", "peering"],
+                "description": "AWS: tgw (default) or peering; GCP/Azure use peering",
+            },
+            # Security
             "enable_bastion_sg": {"type": "boolean"},
             "ssh_cidrs": {"type": "array", "items": {"type": "string"}},
             "enable_guardduty": {"type": "boolean"},
+            "enable_security_center": {"type": "boolean"},
             "enable_nsg_defaults": {"type": "boolean"},
+            # Observability / cost
             "enable_billing_alerts": {"type": "boolean"},
             "billing_thresholds": {
                 "type": "object",
                 "additionalProperties": {"type": "number"},
             },
-            "alert_emails": {"type": "array", "items": {"type": "string", "format": "email"}},
+            "alert_emails": {
+                "type": "array",
+                "items": {"type": "string", "format": "email"},
+            },
+            # State / packaging
             "enable_backend": {"type": "boolean"},
             "enable_bootstrap": {"type": "boolean"},
             "generate_ci": {"type": "boolean"},
@@ -73,11 +124,21 @@ def answers_schema() -> Dict[str, Any]:
             "generate_oidc": {"type": "boolean"},
             "github_org": {"type": "string"},
             "github_repo": {"type": "string"},
+            "provider_version_aws": {"type": "string"},
+            "provider_version_gcp": {"type": "string"},
+            "provider_version_azure": {"type": "string"},
+            "terraform_version": {"type": "string"},
+            "terraform_binary": {
+                "type": "string",
+                "description": "terraform or tofu (used by --validate / bootstrap)",
+            },
+            # Tags / cloud IDs
             "owner": {"type": "string"},
             "cost_center": {"type": "string"},
             "gcp_project_id": {"type": "string"},
             "azure_subscription_id": {"type": "string"},
             "tags": {"type": "object", "additionalProperties": {"type": "string"}},
+            "managed_by": {"type": "string"},
         },
         "required": [],
         "examples": [
@@ -92,7 +153,28 @@ def answers_schema() -> Dict[str, Any]:
                 "vpc_cidr": "10.0.0.0/16",
                 "az_count": 2,
                 "nat_mode": "single",
-            }
+            },
+            {
+                "project": "demo-eks",
+                "cloud": "aws",
+                "region": "us-east-1",
+                "blueprint": "eks-cluster",
+                "az_count": 2,
+                "enable_cluster": True,
+                "cluster_version": "1.29",
+                "node_desired_size": 2,
+                "node_min_size": 1,
+                "node_max_size": 4,
+            },
+            {
+                "project": "demo-hub",
+                "cloud": "aws",
+                "region": "us-east-1",
+                "blueprint": "hub-spoke",
+                "hub_cidr": "10.0.0.0/16",
+                "spoke_count": 2,
+                "hub_spoke_connectivity": "tgw",
+            },
         ],
     }
 
