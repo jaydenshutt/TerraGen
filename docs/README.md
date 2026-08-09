@@ -11,7 +11,7 @@ User-facing guides for installing, generating, deploying, and adopting Terraform
 | [Blueprints](blueprints.md) | Network, private, 3-tier, K8s-ready, clusters, hub-spoke |
 | [Layouts](layouts.md) | Flat vs modular project structure |
 | [Remote state & bootstrap](bootstrap-and-state.md) | Backend config and one-time state resources |
-| [Brownfield import](brownfield-import.md) | Bring an existing AWS VPC under Terraform |
+| [Brownfield import](brownfield-import.md) | Existing networks → Terraform (AWS live + AWS/GCP/Azure inventory) |
 | [Clusters](clusters.md) | EKS / GKE / AKS full stack notes |
 | [Hub-and-spoke](hub-spoke.md) | Multi-VPC topology |
 | [CLI reference](cli-reference.md) | All commands and common flags |

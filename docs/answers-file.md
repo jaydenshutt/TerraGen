@@ -100,7 +100,9 @@ nat_mode: single
 | `examples/answers-aks-cluster.yaml` | Full AKS |
 | `examples/answers-hub-spoke.yaml` | Hub + spokes |
 | `examples/answers-ipv6.yaml` | Dual-stack |
-| `examples/inventory-aws-sample.json` | Brownfield inventory (import) |
+| `examples/inventory-aws-sample.json` | Brownfield import inventory (AWS) |
+| `examples/inventory-gcp-sample.json` | Brownfield import inventory (GCP, offline) |
+| `examples/inventory-azure-sample.json` | Brownfield import inventory (Azure, offline) |
 
 ## CLI overrides
 

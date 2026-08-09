@@ -16,7 +16,7 @@ terragen <command> [options]
 |---------|-------------|
 | `generate` | Generate a Terraform project (default if only flags given) |
 | `bootstrap` | Init/plan/apply remote-state bootstrap stack |
-| `import` | Brownfield: discover AWS VPC → import project |
+| `import` | Brownfield: inventory (AWS/GCP/Azure) or live AWS VPC → import project |
 | `validate` | Validate an answers file |
 | `doctor` | Check Python deps, templates, Terraform, CLIs |
 | `schema` | Print or write JSON Schema for answers |
@@ -60,12 +60,14 @@ terragen <command> [options]
 
 | Flag | Meaning |
 |------|---------|
-| `--cloud aws` | Live discovery cloud |
-| `--vpc-id` | AWS VPC id |
-| `--region` | Region for discovery |
-| `-i` / `--inventory` | JSON inventory path |
+| `-i` / `--inventory` | JSON inventory (AWS / GCP / Azure) — **no cloud account required** |
+| `--cloud aws` | Live discovery (AWS only today) |
+| `--vpc-id` | AWS VPC id (live path) |
+| `--region` | Region for live discovery |
 | `-o` / `--out` | Output directory |
-| `--dry-run` | Print inventory JSON only |
+| `--dry-run` | Print inventory JSON only (live path) |
+
+See [brownfield-import.md](brownfield-import.md) for inventory schemas and samples.
 
 ## `bootstrap` flags
 
@@ -93,6 +95,8 @@ python -m terragen blueprints
 python -m terragen init-answers -i -o answers.yaml          # Q&A → answers only
 python -m terragen generate -a answers.yaml -o ./n --force
 python -m terragen generate -a examples/answers-aws.yaml -o ./n --force --validate
-python -m terragen import -i examples/inventory-aws-sample.json -o ./imp
+python -m terragen import -i examples/inventory-aws-sample.json -o ./imp-aws
+python -m terragen import -i examples/inventory-gcp-sample.json -o ./imp-gcp
+python -m terragen import -i examples/inventory-azure-sample.json -o ./imp-az
 python -m terragen cost --cloud aws --nat-mode per_az --az-count 3
 ```
