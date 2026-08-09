@@ -162,15 +162,4 @@ def test_brownfield_import_from_inventory(tmp_path):
     assert len(files) >= 6
 
 
-def test_examples_v3(tmp_path):
-    root = Path(__file__).resolve().parents[1] / "examples"
-    for name in (
-        "answers-eks-cluster.yaml",
-        "answers-gke-cluster.yaml",
-        "answers-aks-cluster.yaml",
-        "answers-hub-spoke.yaml",
-        "answers-ipv6.yaml",
-    ):
-        cfg = TerraGenConfig.from_file(root / name)
-        assert validate_config(cfg).ok, name
-        render_project(cfg, tmp_path / name, force=True)
+# Example answers files (including v3) are covered by tests/test_examples.py.

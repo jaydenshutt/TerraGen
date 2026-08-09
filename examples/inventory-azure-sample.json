@@ -1,0 +1,97 @@
+{
+  "cloud": "azure",
+  "region": "eastus",
+  "location": "eastus",
+  "resource_group": "rg-legacy-net",
+  "vpc_name": "vnet-legacy",
+  "vpc_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/virtualNetworks/vnet-legacy",
+  "vpc_cidr": "10.60.0.0/16",
+  "address_spaces": ["10.60.0.0/16"],
+  "tags": {
+    "Environment": "prod",
+    "ManagedBy": "terragen-import-sample"
+  },
+  "network_security_groups": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/networkSecurityGroups/nsg-app",
+      "name": "nsg-app",
+      "tags": { "Name": "nsg-app" },
+      "rules": [
+        {
+          "name": "AllowHttps",
+          "priority": 100,
+          "direction": "Inbound",
+          "access": "Allow",
+          "protocol": "Tcp",
+          "source_port_range": "*",
+          "destination_port_range": "443",
+          "source_address_prefix": "10.0.0.0/8",
+          "destination_address_prefix": "*"
+        },
+        {
+          "name": "AllowVnetOut",
+          "priority": 100,
+          "direction": "Outbound",
+          "access": "Allow",
+          "protocol": "*",
+          "source_port_range": "*",
+          "destination_port_range": "*",
+          "source_address_prefix": "*",
+          "destination_address_prefix": "VirtualNetwork"
+        }
+      ]
+    }
+  ],
+  "subnets": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/virtualNetworks/vnet-legacy/subnets/subnet-public",
+      "name": "subnet-public",
+      "cidr": "10.60.0.0/24",
+      "public": true
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/virtualNetworks/vnet-legacy/subnets/subnet-app",
+      "name": "subnet-app",
+      "cidr": "10.60.10.0/24",
+      "public": false,
+      "nsg_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/networkSecurityGroups/nsg-app"
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/virtualNetworks/vnet-legacy/subnets/subnet-data",
+      "name": "subnet-data",
+      "cidr": "10.60.20.0/24",
+      "public": false
+    }
+  ],
+  "route_tables": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/routeTables/rt-private",
+      "name": "rt-private",
+      "routes": [
+        {
+          "name": "default-internet",
+          "address_prefix": "0.0.0.0/0",
+          "next_hop_type": "Internet"
+        }
+      ]
+    }
+  ],
+  "public_ips": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/publicIPAddresses/pip-nat",
+      "name": "pip-nat",
+      "sku": "Standard",
+      "allocation_method": "Static",
+      "tags": { "Name": "pip-nat" }
+    }
+  ],
+  "nat_gateways": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/natGateways/nat-legacy",
+      "name": "nat-legacy",
+      "sku_name": "Standard",
+      "idle_timeout_in_minutes": 4,
+      "public_ip_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-legacy-net/providers/Microsoft.Network/publicIPAddresses/pip-nat"
+    }
+  ]
+}

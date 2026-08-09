@@ -16,7 +16,7 @@ Authentication is the same system Terraform and the cloud CLIs already use.
 | `terraform init -backend=false` + `validate` | **No** |
 | `terraform plan` / `apply` on a generated project | **Yes** for that cloud |
 | `terragen bootstrap` (creates state bucket/table) | **Yes** |
-| `terragen import --inventory …` | **No** |
+| `terragen import --inventory …` (AWS / **GCP** / **Azure**) | **No** — offline inventory path |
 | `terragen import --cloud aws --vpc-id …` (live) | **Yes** (AWS + `boto3`) |
 | GitHub Actions with generated OIDC workflow | **CI role secrets**, not your laptop keys |
 

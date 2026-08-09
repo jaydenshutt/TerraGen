@@ -18,12 +18,20 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      # Terraform on PATH so pytest @terraform / example HCL gates actually run
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+          terraform_wrapper: false
       - name: Install
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Test
+      - name: Test (includes terraform validate for examples + topology)
         run: pytest -q --cov=terragen --cov-report=term-missing
+        env:
+          TF_IN_AUTOMATION: "true"
+          TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/tf-plugin-cache
       - name: Doctor
         run: python -m terragen doctor
       - name: Schema
@@ -133,11 +141,29 @@ jobs:
         with:
           terraform_version: "1.9.0"
           terraform_wrapper: false
-      - name: Import from sample inventory
+      - name: Import AWS inventory
         run: |
-          python -m terragen import --inventory examples/inventory-aws-sample.json --out /tmp/imported
-      - name: Terraform validate import project
-        working-directory: /tmp/imported
+          python -m terragen import --inventory examples/inventory-aws-sample.json --out /tmp/imported-aws
+      - name: Import GCP inventory
+        run: |
+          python -m terragen import --inventory examples/inventory-gcp-sample.json --out /tmp/imported-gcp
+      - name: Import Azure inventory
+        run: |
+          python -m terragen import --inventory examples/inventory-azure-sample.json --out /tmp/imported-azure
+      - name: Terraform validate AWS import
+        working-directory: /tmp/imported-aws
+        run: |
+          terraform fmt -recursive
+          terraform init -backend=false -input=false
+          terraform validate
+      - name: Terraform validate GCP import
+        working-directory: /tmp/imported-gcp
+        run: |
+          terraform fmt -recursive
+          terraform init -backend=false -input=false
+          terraform validate
+      - name: Terraform validate Azure import
+        working-directory: /tmp/imported-azure
         run: |
           terraform fmt -recursive
           terraform init -backend=false -input=false

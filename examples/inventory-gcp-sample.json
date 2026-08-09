@@ -1,0 +1,82 @@
+{
+  "cloud": "gcp",
+  "project_id": "demo-billing-project",
+  "region": "us-central1",
+  "network_name": "legacy-vpc",
+  "vpc_id": "legacy-vpc",
+  "vpc_cidr": "10.50.0.0/16",
+  "routing_mode": "REGIONAL",
+  "auto_create_subnetworks": false,
+  "tags": {
+    "environment": "prod",
+    "managed-by": "terragen-import-sample"
+  },
+  "subnets": [
+    {
+      "id": "legacy-public-a",
+      "name": "legacy-public-a",
+      "cidr": "10.50.0.0/24",
+      "region": "us-central1",
+      "public": true,
+      "private_ip_google_access": false
+    },
+    {
+      "id": "legacy-private-a",
+      "name": "legacy-private-a",
+      "cidr": "10.50.10.0/24",
+      "region": "us-central1",
+      "public": false,
+      "private_ip_google_access": true,
+      "secondary_ranges": [
+        { "name": "pods", "cidr": "10.100.0.0/16" },
+        { "name": "services", "cidr": "10.101.0.0/20" }
+      ]
+    },
+    {
+      "id": "legacy-private-b",
+      "name": "legacy-private-b",
+      "cidr": "10.50.11.0/24",
+      "region": "us-central1",
+      "public": false,
+      "private_ip_google_access": true
+    }
+  ],
+  "routers": [
+    {
+      "id": "legacy-router",
+      "name": "legacy-router",
+      "region": "us-central1",
+      "nats": [
+        {
+          "name": "legacy-nat",
+          "nat_ip_allocate_option": "AUTO_ONLY",
+          "source_subnetwork_ip_ranges_to_nat": "ALL_SUBNETWORKS_ALL_IP_RANGES"
+        }
+      ]
+    }
+  ],
+  "firewalls": [
+    {
+      "id": "allow-internal",
+      "name": "allow-internal",
+      "direction": "INGRESS",
+      "priority": 1000,
+      "source_ranges": ["10.50.0.0/16"],
+      "allows": [
+        { "protocol": "tcp" },
+        { "protocol": "udp" },
+        { "protocol": "icmp" }
+      ]
+    },
+    {
+      "id": "allow-iap-ssh",
+      "name": "allow-iap-ssh",
+      "direction": "INGRESS",
+      "priority": 1000,
+      "source_ranges": ["35.235.240.0/20"],
+      "allows": [
+        { "protocol": "tcp", "ports": ["22"] }
+      ]
+    }
+  ]
+}

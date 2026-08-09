@@ -4,12 +4,18 @@ import blocks + matching resource definitions (Terraform >= 1.5).
 
 Supports:
   - AWS live discovery via boto3 (optional dependency)
-  - AWS / GCP / Azure from inventory JSON
+  - AWS / GCP / Azure from **inventory JSON** (no cloud account required)
 
 AWS discovery (deep) covers:
   VPC, subnets, IGW, NAT + EIP, route tables + associations + routes,
   security groups (+ rules as inline blocks), network ACLs (+ entries),
   VPC endpoints (gateway + interface).
+
+GCP inventory covers:
+  VPC network, subnets (+ secondary ranges), Cloud Router + Cloud NAT, firewalls.
+
+Azure inventory covers:
+  Resource group, VNet, subnets, NSGs (+ rules), route tables, public IPs, NAT gateway.
 """
 
 from __future__ import annotations
@@ -82,6 +88,17 @@ class DiscoveredNetwork:
     network_acls: List[Dict[str, Any]] = field(default_factory=list)
     vpc_endpoints: List[Dict[str, Any]] = field(default_factory=list)
     tags: Dict[str, str] = field(default_factory=dict)
+    # Multi-cloud inventory extras (GCP / Azure)
+    project_id: str = ""  # GCP
+    resource_group: str = ""  # Azure
+    vpc_name: str = ""  # network/VNet short name
+    address_spaces: List[str] = field(default_factory=list)  # Azure
+    routing_mode: str = "REGIONAL"  # GCP
+    auto_create_subnetworks: bool = False  # GCP
+    firewalls: List[Dict[str, Any]] = field(default_factory=list)  # GCP
+    routers: List[Dict[str, Any]] = field(default_factory=list)  # GCP Cloud Router + NAT
+    network_security_groups: List[Dict[str, Any]] = field(default_factory=list)  # Azure
+    public_ips: List[Dict[str, Any]] = field(default_factory=list)  # Azure
     # Legacy / simple fields kept for backward-compatible inventories
     internet_gateway_id: Optional[str] = None
     nat_gateway_ids: List[str] = field(default_factory=list)
@@ -91,18 +108,31 @@ class DiscoveredNetwork:
     def to_dict(self) -> dict:
         return asdict(self)
 
+    def network_name(self) -> str:
+        """Short network / VNet name for Terraform resource naming."""
+        if self.vpc_name:
+            return self.vpc_name
+        # Full Azure resource ID → last segment
+        if "/" in (self.vpc_id or ""):
+            return self.vpc_id.rstrip("/").split("/")[-1]
+        return self.vpc_id or "network"
+
     def summary_counts(self) -> Dict[str, int]:
         return {
             "subnets": len(self.subnets),
             "internet_gateways": len(self.internet_gateways)
             + (1 if self.internet_gateway_id and not self.internet_gateways else 0),
             "nat_gateways": len(self.nat_gateways) or len(self.nat_gateway_ids),
-            "eips": len(self.eips),
+            "eips": len(self.eips) or len(self.public_ips),
             "route_tables": len(self.route_tables) or len(self.route_table_ids),
             "route_table_associations": len(self.route_table_associations),
             "security_groups": len(self.security_groups),
             "network_acls": len(self.network_acls),
             "vpc_endpoints": len(self.vpc_endpoints),
+            "firewalls": len(self.firewalls),
+            "routers": len(self.routers),
+            "network_security_groups": len(self.network_security_groups),
+            "public_ips": len(self.public_ips),
         }
 
 
@@ -407,11 +437,30 @@ def _normalize_sg_perm(p: dict) -> dict:
 
 
 def load_inventory(path: Path) -> DiscoveredNetwork:
-    """Load inventory JSON (legacy simple or deep schema)."""
+    """Load inventory JSON (AWS deep/legacy, or GCP/Azure inventory schemas)."""
     data = json.loads(Path(path).read_text(encoding="utf-8"))
-    cloud = data.get("cloud", "aws")
-    vpc_id = data.get("vpc_id") or data.get("vnet_id") or ""
-    vpc_cidr = data.get("vpc_cidr") or data.get("address_space") or "10.0.0.0/16"
+    cloud = (data.get("cloud") or "aws").lower().strip()
+    if cloud not in ("aws", "gcp", "azure"):
+        raise ValueError(f"Unsupported inventory cloud '{cloud}' (use aws, gcp, or azure)")
+
+    vpc_id = (
+        data.get("vpc_id")
+        or data.get("vnet_id")
+        or data.get("network_id")
+        or data.get("network_name")
+        or ""
+    )
+    address_spaces = list(data.get("address_spaces") or [])
+    if data.get("address_space") and data["address_space"] not in address_spaces:
+        address_spaces.insert(0, data["address_space"])
+    vpc_cidr = (
+        data.get("vpc_cidr")
+        or (address_spaces[0] if address_spaces else None)
+        or data.get("address_space")
+        or "10.0.0.0/16"
+    )
+    if not address_spaces and vpc_cidr:
+        address_spaces = [vpc_cidr]
 
     # Normalize IGW
     igws = list(data.get("internet_gateways") or [])
@@ -458,14 +507,50 @@ def load_inventory(path: Path) -> DiscoveredNetwork:
     subnets = []
     for s in data.get("subnets") or []:
         s = dict(s)
-        s.setdefault("tags", {})
+        s.setdefault("tags", s.get("labels") or {})
         s.setdefault("name", s.get("id", "subnet"))
         s.setdefault("public", False)
+        if cloud == "gcp":
+            s.setdefault("region", data.get("region", ""))
+            s.setdefault("secondary_ranges", s.get("secondary_ip_ranges") or [])
         subnets.append(s)
+
+    # Labels → tags for GCP
+    tags = dict(data.get("tags") or data.get("labels") or {})
+
+    vpc_name = data.get("vpc_name") or data.get("network_name") or ""
+    if not vpc_name and vpc_id:
+        vpc_name = vpc_id.rstrip("/").split("/")[-1] if "/" in vpc_id else vpc_id
+
+    project_id = data.get("project_id") or data.get("gcp_project_id") or ""
+    resource_group = (
+        data.get("resource_group")
+        or data.get("resource_group_name")
+        or data.get("rg")
+        or ""
+    )
+
+    if cloud == "gcp" and not project_id:
+        raise ValueError(
+            "GCP inventory requires project_id (GCP project that owns the VPC network)"
+        )
+    if cloud == "azure" and not resource_group:
+        # Try parse from VNet resource ID
+        # /subscriptions/{sub}/resourceGroups/{rg}/providers/...
+        parts = vpc_id.split("/")
+        if "resourceGroups" in parts:
+            i = parts.index("resourceGroups")
+            if i + 1 < len(parts):
+                resource_group = parts[i + 1]
+        if not resource_group:
+            raise ValueError(
+                "Azure inventory requires resource_group "
+                "(or a full VNet resource id including resourceGroups/...)"
+            )
 
     return DiscoveredNetwork(
         cloud=cloud,
-        region=data.get("region", ""),
+        region=data.get("region") or data.get("location") or "",
         vpc_id=vpc_id,
         vpc_cidr=vpc_cidr,
         enable_dns_support=data.get("enable_dns_support", True),
@@ -480,7 +565,19 @@ def load_inventory(path: Path) -> DiscoveredNetwork:
         security_groups=list(data.get("security_groups") or []),
         network_acls=list(data.get("network_acls") or []),
         vpc_endpoints=list(data.get("vpc_endpoints") or []),
-        tags=data.get("tags") or {},
+        tags=tags,
+        project_id=project_id,
+        resource_group=resource_group,
+        vpc_name=vpc_name,
+        address_spaces=address_spaces,
+        routing_mode=(data.get("routing_mode") or "REGIONAL").upper(),
+        auto_create_subnetworks=bool(data.get("auto_create_subnetworks", False)),
+        firewalls=list(data.get("firewalls") or []),
+        routers=list(data.get("routers") or []),
+        network_security_groups=list(
+            data.get("network_security_groups") or data.get("nsgs") or []
+        ),
+        public_ips=list(data.get("public_ips") or data.get("public_ip_addresses") or []),
         internet_gateway_id=igws[0]["id"] if igws else data.get("internet_gateway_id"),
         nat_gateway_ids=[n["id"] for n in nats] or list(data.get("nat_gateway_ids") or []),
         route_table_ids=[r["id"] for r in rts] or list(data.get("route_table_ids") or []),
@@ -500,8 +597,10 @@ def generate_import_project(disc: DiscoveredNetwork, outdir: Path) -> List[Path]
 
     if disc.cloud == "aws":
         files = _aws_import_files(disc)
-    elif disc.cloud in ("gcp", "azure"):
-        files = _generic_import_readme(disc, disc.cloud.upper())
+    elif disc.cloud == "gcp":
+        files = _gcp_import_files(disc)
+    elif disc.cloud == "azure":
+        files = _azure_import_files(disc)
     else:
         raise ValueError(f"Unsupported cloud for import: {disc.cloud}")
 
@@ -1105,29 +1204,606 @@ def _nacl_entry_hcl(e: dict) -> str:
     return f"  {kind} {{\n" + "\n".join(lines) + "\n  }\n"
 
 
-def _generic_import_readme(disc: DiscoveredNetwork, label: str) -> Dict[str, str]:
-    readme = f'''# Brownfield import — {label}
+# ---------------------------------------------------------------------------
+# GCP inventory → HCL (no live API; works without a GCP account)
+# ---------------------------------------------------------------------------
 
-VPC/VNet ID: `{disc.vpc_id}`
-CIDR: `{disc.vpc_cidr}`
 
-Live auto-discovery for {label} is inventory-driven. Provide a full
-`discovered.json` (export from your cloud tools) and re-run:
+def _gcp_network_import_id(disc: DiscoveredNetwork) -> str:
+    name = disc.network_name()
+    return f"projects/{disc.project_id}/global/networks/{name}"
 
-```bash
-terragen import --inventory discovered.json --out ./imported
-```
 
-For **AWS live discovery** (deep):
+def _gcp_subnet_import_id(disc: DiscoveredNetwork, subnet: Dict[str, Any]) -> str:
+    name = subnet.get("name") or subnet.get("id") or "subnet"
+    # Allow full self-link as id
+    if str(subnet.get("id", "")).startswith("projects/"):
+        return str(subnet["id"])
+    region = subnet.get("region") or disc.region or "us-central1"
+    return f"projects/{disc.project_id}/regions/{region}/subnetworks/{name}"
 
-```bash
-pip install boto3
-terragen import --cloud aws --vpc-id vpc-xxxxxxxx --region us-east-1 --out ./imported
-```
 
-That path discovers subnets, IGW, NAT/EIP, route tables, SGs, NACLs, and endpoints.
+def _gcp_import_files(disc: DiscoveredNetwork) -> Dict[str, str]:
+    imports: List[str] = []
+    net_blocks: List[str] = []
+    subnet_blocks: List[str] = []
+    router_blocks: List[str] = []
+    fw_blocks: List[str] = []
+    outputs: List[str] = []
+    used: set = set()
+
+    def uniq(name: str) -> str:
+        base = name
+        i = 2
+        while name in used:
+            name = f"{base}_{i}"
+            i += 1
+        used.add(name)
+        return name
+
+    net_name = disc.network_name()
+    net_import = _gcp_network_import_id(disc)
+    imports.append(
+        f'import {{\n  to = google_compute_network.main\n  id = {_hcl_str(net_import)}\n}}\n'
+    )
+    labels = disc.tags or {}
+    net_blocks.append(
+        f'''resource "google_compute_network" "main" {{
+  name                    = {_hcl_str(net_name)}
+  auto_create_subnetworks = {"true" if disc.auto_create_subnetworks else "false"}
+  routing_mode            = {_hcl_str(disc.routing_mode or "REGIONAL")}
+  project                 = {_hcl_str(disc.project_id)}
+}}
 '''
-    return {
-        "README.md": readme,
-        "discovered.json": json.dumps(disc.to_dict(), indent=2) + "\n",
+    )
+    outputs.append('output "network_id" {\n  value = google_compute_network.main.id\n}\n')
+    outputs.append(
+        'output "network_name" {\n  value = google_compute_network.main.name\n}\n'
+    )
+    outputs.append(
+        f'output "project_id" {{\n  value = {_hcl_str(disc.project_id)}\n}}\n'
+    )
+
+    subnet_tf: Dict[str, str] = {}
+    for s in disc.subnets:
+        sid = s.get("id") or s.get("name") or "subnet"
+        label = s.get("name") or sid
+        rname = uniq(_tf_name("subnet", label if label != sid else str(sid)[-12:]))
+        subnet_tf[str(sid)] = rname
+        region = s.get("region") or disc.region or "us-central1"
+        cidr = s.get("cidr") or s.get("ip_cidr_range") or "10.0.0.0/24"
+        pig = "true" if s.get("private_ip_google_access", True) else "false"
+        imports.append(
+            f'import {{\n  to = google_compute_subnetwork.{rname}\n'
+            f'  id = {_hcl_str(_gcp_subnet_import_id(disc, s))}\n}}\n'
+        )
+        secondary = s.get("secondary_ranges") or s.get("secondary_ip_ranges") or []
+        sec_hcl = ""
+        for sr in secondary:
+            sr_name = sr.get("name") or "secondary"
+            sr_cidr = sr.get("cidr") or sr.get("ip_cidr_range") or ""
+            if not sr_cidr:
+                continue
+            sec_hcl += f'''
+  secondary_ip_range {{
+    range_name    = {_hcl_str(sr_name)}
+    ip_cidr_range = {_hcl_str(sr_cidr)}
+  }}
+'''
+        subnet_blocks.append(
+            f'''resource "google_compute_subnetwork" "{rname}" {{
+  name                     = {_hcl_str(s.get("name") or label)}
+  ip_cidr_range            = {_hcl_str(cidr)}
+  region                   = {_hcl_str(region)}
+  network                  = google_compute_network.main.id
+  project                  = {_hcl_str(disc.project_id)}
+  private_ip_google_access = {pig}{sec_hcl}
+}}
+'''
+        )
+
+    # Cloud Router + Cloud NAT
+    for r in disc.routers:
+        rid = r.get("id") or r.get("name") or "router"
+        rname = uniq(_tf_name("router", r.get("name") or rid))
+        region = r.get("region") or disc.region or "us-central1"
+        r_import = r.get("import_id") or (
+            f"projects/{disc.project_id}/regions/{region}/routers/{r.get('name') or rid}"
+        )
+        imports.append(
+            f'import {{\n  to = google_compute_router.{rname}\n  id = {_hcl_str(r_import)}\n}}\n'
+        )
+        router_blocks.append(
+            f'''resource "google_compute_router" "{rname}" {{
+  name    = {_hcl_str(r.get("name") or rid)}
+  region  = {_hcl_str(region)}
+  network = google_compute_network.main.id
+  project = {_hcl_str(disc.project_id)}
+}}
+'''
+        )
+        for n in r.get("nats") or []:
+            nname = n.get("name") or "nat"
+            nat_tf = uniq(_tf_name("nat", nname))
+            # NAT import id: {{project}}/{{region}}/{{router}}/{{nat}}
+            nat_import = n.get("import_id") or (
+                f"{disc.project_id}/{region}/{r.get('name') or rid}/{nname}"
+            )
+            imports.append(
+                f'import {{\n  to = google_compute_router_nat.{nat_tf}\n'
+                f'  id = {_hcl_str(nat_import)}\n}}\n'
+            )
+            src = n.get("source_subnetwork_ip_ranges_to_nat") or "ALL_SUBNETWORKS_ALL_IP_RANGES"
+            alloc = n.get("nat_ip_allocate_option") or "AUTO_ONLY"
+            router_blocks.append(
+                f'''resource "google_compute_router_nat" "{nat_tf}" {{
+  name                               = {_hcl_str(nname)}
+  router                             = google_compute_router.{rname}.name
+  region                             = {_hcl_str(region)}
+  project                            = {_hcl_str(disc.project_id)}
+  nat_ip_allocate_option             = {_hcl_str(alloc)}
+  source_subnetwork_ip_ranges_to_nat = {_hcl_str(src)}
+}}
+'''
+            )
+
+    # Firewalls
+    for fw in disc.firewalls:
+        fid = fw.get("id") or fw.get("name") or "fw"
+        fname = uniq(_tf_name("fw", fw.get("name") or fid))
+        fw_import = fw.get("import_id") or (
+            f"projects/{disc.project_id}/global/firewalls/{fw.get('name') or fid}"
+        )
+        imports.append(
+            f'import {{\n  to = google_compute_firewall.{fname}\n  id = {_hcl_str(fw_import)}\n}}\n'
+        )
+        direction = (fw.get("direction") or "INGRESS").upper()
+        priority = int(fw.get("priority") or 1000)
+        sources = fw.get("source_ranges") or fw.get("source_cidrs") or []
+        targets = fw.get("target_tags") or []
+        allows = fw.get("allows") or fw.get("allow") or []
+        allow_hcl = ""
+        for a in allows:
+            proto = a.get("protocol") or "tcp"
+            ports = a.get("ports") or []
+            if ports:
+                allow_hcl += (
+                    f"\n  allow {{\n    protocol = {_hcl_str(proto)}\n"
+                    f"    ports    = {_hcl_list([str(p) for p in ports])}\n  }}\n"
+                )
+            else:
+                allow_hcl += f"\n  allow {{\n    protocol = {_hcl_str(proto)}\n  }}\n"
+        src_line = f"\n  source_ranges = {_hcl_list([str(x) for x in sources])}" if sources else ""
+        tgt_line = f"\n  target_tags   = {_hcl_list([str(x) for x in targets])}" if targets else ""
+        fw_blocks.append(
+            f'''resource "google_compute_firewall" "{fname}" {{
+  name      = {_hcl_str(fw.get("name") or fid)}
+  network   = google_compute_network.main.name
+  project   = {_hcl_str(disc.project_id)}
+  direction = {_hcl_str(direction)}
+  priority  = {priority}{src_line}{tgt_line}{allow_hcl}
+}}
+'''
+        )
+
+    if subnet_tf:
+        outputs.append(
+            "output \"subnet_ids\" {\n  value = {\n"
+            + "\n".join(
+                f'    {_hcl_str(k)} = google_compute_subnetwork.{v}.id'
+                for k, v in subnet_tf.items()
+            )
+            + "\n  }\n}\n"
+        )
+
+    versions = '''terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
     }
+  }
+}
+
+provider "google" {
+  project = ''' + _hcl_str(disc.project_id) + '''
+  region  = ''' + _hcl_str(disc.region or "us-central1") + '''
+}
+'''
+
+    readme = f'''# Brownfield import — GCP (inventory)
+
+**Project:** `{disc.project_id}`  
+**Network:** `{net_name}`  
+**Region:** `{disc.region or "us-central1"}`
+
+Generated from inventory JSON (no live GCP API). Live discovery for GCP is not
+required — export inventory from console/`gcloud` when you have an account.
+
+## Resources
+
+| Kind | Count |
+|------|------:|
+| Subnets | {len(disc.subnets)} |
+| Cloud Routers | {len(disc.routers)} |
+| Firewalls | {len(disc.firewalls)} |
+
+## Adopt into state
+
+```bash
+cd $(dirname "$0")
+terraform init
+terraform plan    # expect import-only + possible attribute drift
+# terraform apply # binds import blocks — review first
+```
+
+## Safety
+
+- Do **not** destroy until you understand blast radius.
+- Secondary ranges / NAT options often drift; refine HCL after first plan.
+- See `examples/inventory-gcp-sample.json` and docs/brownfield-import.md.
+'''
+
+    files: Dict[str, str] = {
+        "versions.tf": versions,
+        "imports.tf": "\n".join(imports) + "\n",
+        "network.tf": "\n".join(net_blocks) + "\n",
+        "subnets.tf": "\n".join(subnet_blocks) + "\n" if subnet_blocks else "# no subnets\n",
+        "outputs.tf": "\n".join(outputs) + "\n",
+        "README.md": readme,
+        ".gitignore": "*.tfstate*\n.terraform/\n.terraform.lock.hcl\n",
+    }
+    if router_blocks:
+        files["routers.tf"] = "\n".join(router_blocks) + "\n"
+    if fw_blocks:
+        files["firewalls.tf"] = "\n".join(fw_blocks) + "\n"
+    return files
+
+
+# ---------------------------------------------------------------------------
+# Azure inventory → HCL (no live API; works without an Azure subscription)
+# ---------------------------------------------------------------------------
+
+
+def _azure_import_files(disc: DiscoveredNetwork) -> Dict[str, str]:
+    imports: List[str] = []
+    rg_blocks: List[str] = []
+    vnet_blocks: List[str] = []
+    subnet_blocks: List[str] = []
+    nsg_blocks: List[str] = []
+    rt_blocks: List[str] = []
+    pip_blocks: List[str] = []
+    nat_blocks: List[str] = []
+    outputs: List[str] = []
+    used: set = set()
+
+    def uniq(name: str) -> str:
+        base = name
+        i = 2
+        while name in used:
+            name = f"{base}_{i}"
+            i += 1
+        used.add(name)
+        return name
+
+    rg = disc.resource_group
+    location = disc.region or "eastus"
+    vnet_name = disc.network_name()
+    spaces = disc.address_spaces or ([disc.vpc_cidr] if disc.vpc_cidr else ["10.0.0.0/16"])
+
+    # Resource group — optional import if id provided in raw or tags
+    rg_id = disc.raw.get("resource_group_id") if isinstance(disc.raw, dict) else None
+    # Prefer synthetic import only when full id present; otherwise create-managed note
+    if rg_id:
+        imports.append(
+            f'import {{\n  to = azurerm_resource_group.main\n  id = {_hcl_str(rg_id)}\n}}\n'
+        )
+    rg_blocks.append(
+        f'''resource "azurerm_resource_group" "main" {{
+  name     = {_hcl_str(rg)}
+  location = {_hcl_str(location)}
+  tags     = {_hcl_map(disc.tags or {})}
+}}
+'''
+    )
+
+    # VNet
+    vnet_import = disc.vpc_id
+    if not str(vnet_import).startswith("/"):
+        # Minimal fake path for inventory samples (still valid import id *shape*)
+        vnet_import = (
+            f"/subscriptions/00000000-0000-0000-0000-000000000000"
+            f"/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{vnet_name}"
+        )
+    imports.append(
+        f'import {{\n  to = azurerm_virtual_network.main\n  id = {_hcl_str(vnet_import)}\n}}\n'
+    )
+    vnet_blocks.append(
+        f'''resource "azurerm_virtual_network" "main" {{
+  name                = {_hcl_str(vnet_name)}
+  address_space       = {_hcl_list(spaces)}
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = {_hcl_map(disc.tags or {})}
+}}
+'''
+    )
+    outputs.append(
+        'output "vnet_id" {\n  value = azurerm_virtual_network.main.id\n}\n'
+    )
+    outputs.append(
+        'output "vnet_name" {\n  value = azurerm_virtual_network.main.name\n}\n'
+    )
+    outputs.append(
+        f'output "resource_group" {{\n  value = azurerm_resource_group.main.name\n}}\n'
+    )
+
+    # NSGs first so subnets can reference
+    nsg_tf: Dict[str, str] = {}
+    for nsg in disc.network_security_groups:
+        nid = nsg.get("id") or nsg.get("name") or "nsg"
+        nname = uniq(_tf_name("nsg", nsg.get("name") or nid))
+        nsg_tf[str(nid)] = nname
+        nsg_import = nsg.get("id") or (
+            f"/subscriptions/00000000-0000-0000-0000-000000000000"
+            f"/resourceGroups/{rg}/providers/Microsoft.Network/networkSecurityGroups/"
+            f"{nsg.get('name') or nid}"
+        )
+        imports.append(
+            f'import {{\n  to = azurerm_network_security_group.{nname}\n'
+            f'  id = {_hcl_str(nsg_import)}\n}}\n'
+        )
+        rules_hcl = ""
+        for rule in nsg.get("rules") or nsg.get("security_rules") or []:
+            r_name = rule.get("name") or "rule"
+            prio = int(rule.get("priority") or 100)
+            direction = rule.get("direction") or "Inbound"
+            access = rule.get("access") or "Allow"
+            protocol = rule.get("protocol") or "Tcp"
+            src_p = rule.get("source_port_range") or "*"
+            dst_p = rule.get("destination_port_range") or "*"
+            src_a = rule.get("source_address_prefix") or "*"
+            dst_a = rule.get("destination_address_prefix") or "*"
+            rules_hcl += f'''
+  security_rule {{
+    name                       = {_hcl_str(r_name)}
+    priority                   = {prio}
+    direction                  = {_hcl_str(direction)}
+    access                     = {_hcl_str(access)}
+    protocol                   = {_hcl_str(protocol)}
+    source_port_range          = {_hcl_str(str(src_p))}
+    destination_port_range     = {_hcl_str(str(dst_p))}
+    source_address_prefix      = {_hcl_str(str(src_a))}
+    destination_address_prefix = {_hcl_str(str(dst_a))}
+  }}
+'''
+        nsg_blocks.append(
+            f'''resource "azurerm_network_security_group" "{nname}" {{
+  name                = {_hcl_str(nsg.get("name") or nid)}
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = {_hcl_map(nsg.get("tags") or {})}{rules_hcl}
+}}
+'''
+        )
+
+    subnet_tf: Dict[str, str] = {}
+    for s in disc.subnets:
+        sid = s.get("id") or s.get("name") or "subnet"
+        label = s.get("name") or sid
+        rname = uniq(_tf_name("subnet", label if label != sid else str(sid)[-12:]))
+        subnet_tf[str(sid)] = rname
+        cidr = s.get("cidr") or (s.get("address_prefixes") or ["10.0.0.0/24"])[0]
+        s_import = s.get("id") if str(s.get("id", "")).startswith("/") else (
+            f"{vnet_import}/subnets/{s.get('name') or label}"
+        )
+        imports.append(
+            f'import {{\n  to = azurerm_subnet.{rname}\n  id = {_hcl_str(s_import)}\n}}\n'
+        )
+        prefixes = s.get("address_prefixes") or [cidr]
+        subnet_blocks.append(
+            f'''resource "azurerm_subnet" "{rname}" {{
+  name                 = {_hcl_str(s.get("name") or label)}
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = {_hcl_list([str(p) for p in prefixes])}
+}}
+'''
+        )
+        # Optional NSG association
+        nsg_ref = s.get("nsg_id") or s.get("network_security_group_id")
+        if nsg_ref and nsg_ref in nsg_tf:
+            aname = uniq(_tf_name("nsg_assoc", rname))
+            # Association id is often subnet id; use explicit if provided
+            a_import = s.get("nsg_association_id") or s_import
+            imports.append(
+                f'import {{\n  to = azurerm_subnet_network_security_group_association.{aname}\n'
+                f'  id = {_hcl_str(a_import)}\n}}\n'
+            )
+            nsg_blocks.append(
+                f'''resource "azurerm_subnet_network_security_group_association" "{aname}" {{
+  subnet_id                 = azurerm_subnet.{rname}.id
+  network_security_group_id = azurerm_network_security_group.{nsg_tf[nsg_ref]}.id
+}}
+'''
+            )
+
+    # Route tables
+    for rt in disc.route_tables:
+        rid = rt.get("id") or rt.get("name") or "rt"
+        rname = uniq(_tf_name("rt", rt.get("name") or rid))
+        rt_import = rt.get("id") if str(rt.get("id", "")).startswith("/") else (
+            f"/subscriptions/00000000-0000-0000-0000-000000000000"
+            f"/resourceGroups/{rg}/providers/Microsoft.Network/routeTables/{rt.get('name') or rid}"
+        )
+        imports.append(
+            f'import {{\n  to = azurerm_route_table.{rname}\n  id = {_hcl_str(rt_import)}\n}}\n'
+        )
+        routes_hcl = ""
+        for route in rt.get("routes") or []:
+            rn = route.get("name") or "default"
+            prefix = route.get("address_prefix") or route.get("destination_cidr") or "0.0.0.0/0"
+            nh_type = route.get("next_hop_type") or "Internet"
+            routes_hcl += f'''
+  route {{
+    name           = {_hcl_str(rn)}
+    address_prefix = {_hcl_str(prefix)}
+    next_hop_type  = {_hcl_str(nh_type)}
+  }}
+'''
+        rt_blocks.append(
+            f'''resource "azurerm_route_table" "{rname}" {{
+  name                = {_hcl_str(rt.get("name") or rid)}
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = {_hcl_map(rt.get("tags") or {})}{routes_hcl}
+}}
+'''
+        )
+
+    # Public IPs
+    pip_tf: Dict[str, str] = {}
+    for pip in disc.public_ips:
+        pid = pip.get("id") or pip.get("name") or "pip"
+        pname = uniq(_tf_name("pip", pip.get("name") or pid))
+        pip_tf[str(pid)] = pname
+        p_import = pip.get("id") if str(pip.get("id", "")).startswith("/") else (
+            f"/subscriptions/00000000-0000-0000-0000-000000000000"
+            f"/resourceGroups/{rg}/providers/Microsoft.Network/publicIPAddresses/{pip.get('name') or pid}"
+        )
+        imports.append(
+            f'import {{\n  to = azurerm_public_ip.{pname}\n  id = {_hcl_str(p_import)}\n}}\n'
+        )
+        sku = pip.get("sku") or "Standard"
+        alloc = pip.get("allocation_method") or "Static"
+        pip_blocks.append(
+            f'''resource "azurerm_public_ip" "{pname}" {{
+  name                = {_hcl_str(pip.get("name") or pid)}
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  allocation_method   = {_hcl_str(alloc)}
+  sku                 = {_hcl_str(sku)}
+  tags                = {_hcl_map(pip.get("tags") or {})}
+}}
+'''
+        )
+
+    # NAT gateways
+    for n in disc.nat_gateways:
+        nid = n.get("id") or n.get("name") or "nat"
+        nname = uniq(_tf_name("nat", n.get("name") or nid))
+        n_import = n.get("id") if str(n.get("id", "")).startswith("/") else (
+            f"/subscriptions/00000000-0000-0000-0000-000000000000"
+            f"/resourceGroups/{rg}/providers/Microsoft.Network/natGateways/{n.get('name') or nid}"
+        )
+        imports.append(
+            f'import {{\n  to = azurerm_nat_gateway.{nname}\n  id = {_hcl_str(n_import)}\n}}\n'
+        )
+        nat_blocks.append(
+            f'''resource "azurerm_nat_gateway" "{nname}" {{
+  name                    = {_hcl_str(n.get("name") or nid)}
+  location                = azurerm_resource_group.main.location
+  resource_group_name     = azurerm_resource_group.main.name
+  sku_name                = {_hcl_str(n.get("sku_name") or "Standard")}
+  idle_timeout_in_minutes = {int(n.get("idle_timeout_in_minutes") or 4)}
+  tags                    = {_hcl_map(n.get("tags") or {})}
+}}
+'''
+        )
+        pip_ref = n.get("public_ip_id") or n.get("allocation_id")
+        if pip_ref and pip_ref in pip_tf:
+            aname = uniq(_tf_name("nat_pip", nname))
+            a_import = n.get("pip_association_id") or n_import
+            imports.append(
+                f'import {{\n  to = azurerm_nat_gateway_public_ip_association.{aname}\n'
+                f'  id = {_hcl_str(a_import)}\n}}\n'
+            )
+            nat_blocks.append(
+                f'''resource "azurerm_nat_gateway_public_ip_association" "{aname}" {{
+  nat_gateway_id       = azurerm_nat_gateway.{nname}.id
+  public_ip_address_id = azurerm_public_ip.{pip_tf[pip_ref]}.id
+}}
+'''
+            )
+
+    if subnet_tf:
+        outputs.append(
+            "output \"subnet_ids\" {\n  value = {\n"
+            + "\n".join(
+                f'    {_hcl_str(k)} = azurerm_subnet.{v}.id' for k, v in subnet_tf.items()
+            )
+            + "\n  }\n}\n"
+        )
+
+    versions = '''terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+'''
+
+    readme = f'''# Brownfield import — Azure (inventory)
+
+**Resource group:** `{rg}`  
+**VNet:** `{vnet_name}`  
+**Location:** `{location}`  
+**Address space:** `{', '.join(spaces)}`
+
+Generated from inventory JSON (no live Azure API). Works without an Azure
+subscription for generate + `terraform validate`.
+
+## Resources
+
+| Kind | Count |
+|------|------:|
+| Subnets | {len(disc.subnets)} |
+| NSGs | {len(disc.network_security_groups)} |
+| Route tables | {len(disc.route_tables)} |
+| Public IPs | {len(disc.public_ips)} |
+| NAT gateways | {len(disc.nat_gateways)} |
+
+## Adopt into state
+
+```bash
+cd $(dirname "$0")
+terraform init
+terraform plan
+# terraform apply  # only after reviewing plan and fixing real resource IDs
+```
+
+Replace sample subscription GUIDs in import IDs with your real IDs before apply.
+
+## Safety
+
+- Import apply **binds state** to existing resources — never destroy lightly.
+- See `examples/inventory-azure-sample.json` and docs/brownfield-import.md.
+'''
+
+    files: Dict[str, str] = {
+        "versions.tf": versions,
+        "imports.tf": "\n".join(imports) + "\n",
+        "resource_group.tf": "\n".join(rg_blocks) + "\n",
+        "network.tf": "\n".join(vnet_blocks) + "\n",
+        "subnets.tf": "\n".join(subnet_blocks) + "\n" if subnet_blocks else "# no subnets\n",
+        "outputs.tf": "\n".join(outputs) + "\n",
+        "README.md": readme,
+        ".gitignore": "*.tfstate*\n.terraform/\n.terraform.lock.hcl\n",
+    }
+    if nsg_blocks:
+        files["nsg.tf"] = "\n".join(nsg_blocks) + "\n"
+    if rt_blocks:
+        files["routes.tf"] = "\n".join(rt_blocks) + "\n"
+    if pip_blocks:
+        files["public_ips.tf"] = "\n".join(pip_blocks) + "\n"
+    if nat_blocks:
+        files["nat.tf"] = "\n".join(nat_blocks) + "\n"
+    return files

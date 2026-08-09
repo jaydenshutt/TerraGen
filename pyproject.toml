@@ -54,3 +54,7 @@ terragen = ["templates/**/*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+  "terraform: requires terraform or tofu on PATH for init/validate",
+  "live_aws: optional read-only AWS API tests (skip without credentials)",
+]

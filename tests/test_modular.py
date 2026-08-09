@@ -131,9 +131,4 @@ def test_cli_bootstrap_dry_run(tmp_path):
     assert rc == 0
 
 
-def test_example_modular_and_private(tmp_path):
-    root = Path(__file__).resolve().parents[1] / "examples"
-    for name in ("answers-modular.yaml", "answers-private-only.yaml"):
-        cfg = TerraGenConfig.from_file(root / name)
-        assert validate_config(cfg).ok, name
-        render_project(cfg, tmp_path / name, force=True)
+# answers-modular / answers-private-only covered by tests/test_examples.py.

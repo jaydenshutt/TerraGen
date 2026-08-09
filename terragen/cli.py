@@ -816,8 +816,10 @@ def cmd_import(args: argparse.Namespace) -> int:
         else:
             _err(
                 "Provide either:\n"
-                "  --inventory path/to/discovered.json\n"
-                "  or --cloud aws --vpc-id vpc-xxxxxxxx [--region us-east-1]"
+                "  --inventory path/to/inventory.json   "
+                "(AWS, GCP, or Azure — see examples/inventory-*-sample.json)\n"
+                "  or --cloud aws --vpc-id vpc-xxxxxxxx [--region us-east-1]  "
+                "(live AWS only; needs boto3)"
             )
             return 1
 
@@ -828,22 +830,46 @@ def cmd_import(args: argparse.Namespace) -> int:
         written = generate_import_project(disc, outdir)
         counts = disc.summary_counts()
         _print(f"✓ Brownfield import project written to: {outdir}")
-        _print(f"  VPC/VNet: {disc.vpc_id}  CIDR: {disc.vpc_cidr}  region: {disc.region}")
         _print(
-            "  Discovered: "
-            f"subnets={counts['subnets']} igw={counts['internet_gateways']} "
-            f"nat={counts['nat_gateways']} eip={counts['eips']} "
-            f"rtb={counts['route_tables']} rta={counts['route_table_associations']} "
-            f"sg={counts['security_groups']} nacl={counts['network_acls']} "
-            f"vpce={counts['vpc_endpoints']}"
+            f"  Cloud: {disc.cloud}  network: {disc.network_name()}  "
+            f"CIDR/space: {disc.vpc_cidr}  region: {disc.region or '(n/a)'}"
         )
+        if disc.cloud == "gcp":
+            _print(f"  GCP project: {disc.project_id}")
+            _print(
+                "  Inventory: "
+                f"subnets={counts['subnets']} routers={counts['routers']} "
+                f"firewalls={counts['firewalls']}"
+            )
+        elif disc.cloud == "azure":
+            _print(f"  Resource group: {disc.resource_group}")
+            _print(
+                "  Inventory: "
+                f"subnets={counts['subnets']} nsg={counts['network_security_groups']} "
+                f"rt={counts['route_tables']} pip={counts['public_ips']} "
+                f"nat={counts['nat_gateways']}"
+            )
+        else:
+            _print(
+                "  Discovered: "
+                f"subnets={counts['subnets']} igw={counts['internet_gateways']} "
+                f"nat={counts['nat_gateways']} eip={counts['eips']} "
+                f"rtb={counts['route_tables']} rta={counts['route_table_associations']} "
+                f"sg={counts['security_groups']} nacl={counts['network_acls']} "
+                f"vpce={counts['vpc_endpoints']}"
+            )
         _print(f"  Files: {len(written)}")
         _print()
         _print("Next steps:")
         _print(f"  1. cd {outdir}")
-        _print("  2. Review imports.tf + *.tf against reality")
+        _print("  2. Review imports.tf + *.tf against reality (fix sample IDs if needed)")
         _print("  3. terraform init && terraform plan")
         _print("  4. Fix remaining drift, then apply to bind state")
+        if disc.cloud != "aws":
+            _print(
+                "  Note: live discovery is AWS-only; GCP/Azure use inventory JSON "
+                "(see examples/inventory-gcp-sample.json, inventory-azure-sample.json)."
+            )
         return 0
     except Exception as e:
         _err(f"Import failed: {e}")

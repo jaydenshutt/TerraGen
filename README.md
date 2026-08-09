@@ -18,7 +18,7 @@ Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 | [Cloud credentials](docs/cloud-credentials.md) | AWS / GCP / Azure auth (local + CI OIDC) |
 | [Docs index](docs/README.md) | All guides |
 | [CLI reference](docs/cli-reference.md) | Commands and flags |
-| [Brownfield import](docs/brownfield-import.md) | Existing AWS VPC → Terraform |
+| [Brownfield import](docs/brownfield-import.md) | Existing networks → Terraform (AWS live + multi-cloud inventory) |
 
 ---
 
@@ -40,7 +40,7 @@ Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 - **Layouts**: `flat` (single root) or `modular` (`modules/network` + `envs/{dev,prod}`)
 - **Blueprints**: foundation networks, private/3-tier, K8s-ready, **full EKS/GKE/AKS clusters**, **hub-and-spoke**
 - **IPv6 dual-stack**: optional dual-stack VPC/subnets (AWS/GCP/Azure)
-- **Brownfield import**: `terragen import` discovers an existing AWS VPC and emits Terraform import blocks
+- **Brownfield import**: AWS live VPC discovery **or** inventory JSON for **AWS / GCP / Azure** (no GCP/Azure account required to generate)
 - **Private-only**: no NAT/public subnets + AWS interface endpoint pack (SSM, ECR, logs, …)
 - **Interactive & non-interactive**: prompts or `--answers` JSON/YAML
 - **Smart CIDR planning**: auto public/private subnets per AZ (or bring your own)
@@ -178,23 +178,26 @@ python -m terragen generate --cloud aws --blueprint network-ha --ipv6 --project 
 # or answers: enable_ipv6: true
 ```
 
-### Brownfield import (existing AWS VPC)
+### Brownfield import (existing networks)
 
-Deep import discovers **VPC, subnets, IGW, NAT+EIP, route tables + associations,
-security groups, network ACLs, and VPC endpoints**, then writes Terraform 1.5+
-`import` blocks plus matching resources.
+| Path | Clouds |
+|------|--------|
+| **Inventory JSON** (offline) | AWS, **GCP**, **Azure** — no account needed to generate/validate |
+| **Live discovery** | AWS only (`boto3`, read-only) |
 
 ```bash
-# Live discovery (needs AWS creds + boto3; read-only API — see docs/cloud-credentials.md)
-python -m terragen import --cloud aws --vpc-id vpc-0abc123 --region us-east-1 --out ./imported
+# Multi-cloud inventory (works without GCP/Azure accounts)
+python -m terragen import --inventory examples/inventory-gcp-sample.json -o ./imported-gcp
+python -m terragen import --inventory examples/inventory-azure-sample.json -o ./imported-azure
+python -m terragen import --inventory examples/inventory-aws-sample.json -o ./imported-aws
 
-# Or from a JSON inventory (see examples/inventory-aws-sample.json)
-python -m terragen import --inventory examples/inventory-aws-sample.json --out ./imported
-cd ./imported && terraform init && terraform plan
+# Live AWS discovery (needs AWS creds + boto3 — see docs/cloud-credentials.md)
+python -m terragen import --cloud aws --vpc-id vpc-0abc123 --region us-east-1 -o ./imported
+
+cd ./imported-gcp && terraform init -backend=false && terraform validate
 ```
 
-Output files: `imports.tf`, `vpc.tf`, `subnets.tf`, `gateways.tf`, `routes.tf`,
-`security.tf`, `acls.tf`, `endpoints.tf`, `outputs.tf`, `discovered.json`.
+Full inventory field reference: [docs/brownfield-import.md](docs/brownfield-import.md).
 
 ---
 

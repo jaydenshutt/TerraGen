@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.2 — 2026-08-09 (unreleased until tag)
+
+### Added
+- **GCP / Azure brownfield import via inventory JSON** (no live cloud account required to generate)
+  - `examples/inventory-gcp-sample.json` — VPC network, subnets + secondary ranges, Cloud Router/NAT, firewalls
+  - `examples/inventory-azure-sample.json` — RG, VNet, subnets, NSGs, route tables, public IPs, NAT gateway
+  - Full multi-file HCL + `import` blocks; CI terraform-validate for all three sample inventories
+- Docs: expanded [brownfield-import](docs/brownfield-import.md); credentials note for offline inventory path
+- Runtime branding: `Created by Jayden Shutt` on version / wizard / doctor
+- Disclaimer (no warranty / use at own risk) in README + docs
+- Cloud credentials guide (`docs/cloud-credentials.md`)
+
 ## 3.0.1 — 2026-08-08
 
 ### Improved

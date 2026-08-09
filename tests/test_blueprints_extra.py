@@ -88,14 +88,4 @@ def test_3tier_has_isolated():
     assert len(cfg.isolated_subnets) == cfg.az_count
 
 
-def test_example_files(tmp_path):
-    root = Path(__file__).resolve().parents[1] / "examples"
-    for name in (
-        "answers-3tier.yaml",
-        "answers-eks-ready.yaml",
-        "answers-gke-ready.yaml",
-        "answers-aks-ready.yaml",
-    ):
-        cfg = TerraGenConfig.from_file(root / name)
-        assert validate_config(cfg).ok, name
-        render_project(cfg, tmp_path / name, force=True)
+# Example answers files are covered by tests/test_examples.py (all answers-*).
