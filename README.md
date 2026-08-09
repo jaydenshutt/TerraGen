@@ -57,9 +57,20 @@ Created by [Jayden Shutt](https://www.linkedin.com/in/jaydenshutt/)
 
 ## 5-minute quickstart
 
+**Easiest install (no clone required):**
+
 ```bash
+python -m pip install "git+https://github.com/jaydenshutt/TerraGen.git"
+python -m terragen version          # TerraGen x.y.z — Created by Jayden Shutt
+python -m terragen generate         # interactive wizard
+```
+
+**From a clone (dev / examples):**
+
+```bash
+git clone https://github.com/jaydenshutt/TerraGen.git
 cd TerraGen
-python -m pip install -e .
+python -m pip install -e ".[dev]"
 python -m terragen generate          # interactive — explains each question
 # follow prompts, confirm the summary, then:
 cd my-cloud-project-dev-terraform    # or whatever --out / project name you used
@@ -78,17 +89,23 @@ python -m terragen generate -a examples/answers-aws.yaml -o ./my-network --force
 
 **Credentials:** `generate` is local-only. Configure AWS / GCP / Azure before `terraform plan` / `apply`, bootstrap, or live import — see **[Cloud credentials](docs/cloud-credentials.md)**.
 
+**Generated file layout:** outputs and variables live in `outputs.tf` / `variables.tf`; modular env roots use `main.tf` for module calls. Flat stacks split resources by domain (`network.tf`, `security.tf`, …). See [Layouts](docs/layouts.md#hashicorp-conventions-how-we-compare).
+
 ---
 
 ## Install
 
 ```bash
-# From the repo
+# Recommended for end users (GitHub, no manual clone)
+python -m pip install "git+https://github.com/jaydenshutt/TerraGen.git"
+
+# From a local clone (contributors / running examples)
+git clone https://github.com/jaydenshutt/TerraGen.git
+cd TerraGen
 python -m pip install -e ".[dev]"
 
-# Or run without installing
+# Without packaging: deps only
 python -m pip install -r requirements.txt
-python TerraGen.py --help
 python -m terragen --help
 ```
 

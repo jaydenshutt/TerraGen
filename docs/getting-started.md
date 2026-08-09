@@ -26,16 +26,27 @@ Full guide (when you need auth, env vars, SSO, OIDC CI, Windows): **[Cloud crede
 
 ## 1. Install TerraGen
 
+### Option A — From GitHub (fastest for users)
+
+```bash
+python -m pip install "git+https://github.com/jaydenshutt/TerraGen.git"
+```
+
+No clone required. You still need Terraform installed separately for `plan` / `apply`.
+
+### Option B — Clone (examples + development)
+
 ```bash
 git clone https://github.com/jaydenshutt/TerraGen.git
 cd TerraGen
 python -m pip install -e .
+# with tests: python -m pip install -e ".[dev]"
 ```
 
 Verify:
 
 ```bash
-python -m terragen version
+python -m terragen version    # shows version + Created by Jayden Shutt
 python -m terragen doctor
 ```
 

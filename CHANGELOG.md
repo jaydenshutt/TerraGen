@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.2 — 2026-08-09 (unreleased until tag)
+## 3.0.2 — 2026-08-09
 
 ### Added
 - **GCP / Azure brownfield import via inventory JSON** (no live cloud account required to generate)
@@ -11,6 +11,8 @@
 - Runtime branding: `Created by Jayden Shutt` on version / wizard / doctor
 - Disclaimer (no warranty / use at own risk) in README + docs
 - Cloud credentials guide (`docs/cloud-credentials.md`)
+- Easier install: `pip install git+https://github.com/jaydenshutt/TerraGen.git` (no clone)
+- Layout docs: HashiCorp standard module / style-guide comparison (`docs/layouts.md`)
 
 ## 3.0.1 — 2026-08-08
 
