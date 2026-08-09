@@ -7,6 +7,8 @@
   security groups (ingress/egress), network ACLs, VPC endpoints; multi-file HCL + counts in CLI
 - Richer sample inventory; import tests; terraform-validate-clean generated import projects
 - Hub-spoke multi-AZ private routes; AKS autoscaling pool without conflicting `node_count`; modular cluster outputs
+- Package version aligned to **3.0.1**
+- CI expanded: full cluster examples, hub-spoke, IPv6, dedicated brownfield import job; use `python -m terragen` in CI
 
 ## 3.0.0 — 2026-08-08
 

@@ -1,6 +1,6 @@
 """TerraGen — world-class multi-cloud Terraform project generator."""
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 __author__ = "Jayden Shutt"
 
 from terragen.config import TerraGenConfig

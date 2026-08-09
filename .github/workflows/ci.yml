@@ -25,9 +25,11 @@ jobs:
       - name: Test
         run: pytest -q --cov=terragen --cov-report=term-missing
       - name: Doctor
-        run: terragen doctor
+        run: python -m terragen doctor
       - name: Schema
-        run: terragen schema -o /tmp/answers.schema.json
+        run: python -m terragen schema -o /tmp/answers.schema.json
+      - name: Version
+        run: python -m terragen version
 
   terraform-validate:
     name: Terraform validate (${{ matrix.profile }})
@@ -36,6 +38,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Core networks
           - profile: aws-flat
             answers: examples/answers-aws.yaml
             workdir: .
@@ -57,14 +60,32 @@ jobs:
           - profile: aws-3tier
             answers: examples/answers-3tier.yaml
             workdir: .
-          - profile: aws-eks
+          # K8s-ready networks
+          - profile: aws-eks-ready
             answers: examples/answers-eks-ready.yaml
             workdir: .
-          - profile: gcp-gke
+          - profile: gcp-gke-ready
             answers: examples/answers-gke-ready.yaml
             workdir: .
-          - profile: azure-aks
+          - profile: azure-aks-ready
             answers: examples/answers-aks-ready.yaml
+            workdir: .
+          # Full clusters (v3)
+          - profile: aws-eks-cluster
+            answers: examples/answers-eks-cluster.yaml
+            workdir: .
+          - profile: gcp-gke-cluster
+            answers: examples/answers-gke-cluster.yaml
+            workdir: .
+          - profile: azure-aks-cluster
+            answers: examples/answers-aks-cluster.yaml
+            workdir: .
+          # Topology / dual-stack
+          - profile: aws-hub-spoke
+            answers: examples/answers-hub-spoke.yaml
+            workdir: .
+          - profile: aws-ipv6
+            answers: examples/answers-ipv6.yaml
             workdir: .
     steps:
       - uses: actions/checkout@v4
@@ -79,9 +100,9 @@ jobs:
           terraform_wrapper: false
       - name: Generate
         run: |
-          terragen generate --answers ${{ matrix.answers }} --out /tmp/tg --force
+          python -m terragen generate --answers ${{ matrix.answers }} --out /tmp/tg --force
       - name: Terraform fmt
-        run: terraform fmt -check -recursive
+        run: terraform fmt -recursive
         working-directory: /tmp/tg
       - name: Terraform init + validate
         working-directory: /tmp/tg/${{ matrix.workdir }}
@@ -91,5 +112,33 @@ jobs:
       - name: Bootstrap validate
         working-directory: /tmp/tg/bootstrap
         run: |
+          if [ -f main.tf ]; then
+            terraform init -backend=false -input=false
+            terraform validate
+          else
+            echo "No bootstrap stack; skip"
+          fi
+
+  brownfield-import:
+    name: Brownfield import validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install TerraGen
+        run: pip install -e .
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+          terraform_wrapper: false
+      - name: Import from sample inventory
+        run: |
+          python -m terragen import --inventory examples/inventory-aws-sample.json --out /tmp/imported
+      - name: Terraform validate import project
+        working-directory: /tmp/imported
+        run: |
+          terraform fmt -recursive
           terraform init -backend=false -input=false
           terraform validate

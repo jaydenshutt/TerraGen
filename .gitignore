@@ -24,6 +24,8 @@ htmlcov/
 # Local AI / session handoff (never publish)
 aistatus.md
 **/aistatus.md
+aibootstrap.md
+**/aibootstrap.md
 
 # Generated local test projects
 *-terraform/
