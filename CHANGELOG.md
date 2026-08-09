@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.3 — 2026-08-09
+
+### Changed
+- **HashiCorp-aligned generated layout** (breaking for scripts that expected old names):
+  - `network.tf` → **`main.tf`** (flat root + `modules/network`)
+  - `versions.tf` → **`terraform.tf`**
+  - Import projects: `vpc.tf` / `network.tf` → **`main.tf`**; split **`providers.tf`** + **`terraform.tf`**
+- Domain files (`security.tf`, `cluster.tf`, …) kept for large multi-cloud stacks
+- Docs + generated README describe the standard layout
+
 ## 3.0.2 — 2026-08-09
 
 ### Added

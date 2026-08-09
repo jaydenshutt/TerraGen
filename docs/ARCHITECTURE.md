@@ -60,8 +60,8 @@ templates/
 
 | Mode | Output |
 |------|--------|
-| `flat` | Single root (`network.tf`, `providers.tf`, …) |
-| `modular` | `modules/network` + `envs/<env>/*` thin roots + shared `bootstrap/` / `oidc/` |
+| `flat` | Single root (`main.tf`, `variables.tf`, `outputs.tf`, `providers.tf`, `terraform.tf`, …) |
+| `modular` | `modules/network` (`main.tf` + vars/outputs) + `envs/<env>/main.tf` module roots + shared `bootstrap/` / `oidc/` |
 
 ## Private-only (AWS)
 

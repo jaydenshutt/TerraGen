@@ -53,12 +53,15 @@ def test_generate_gcp_import_project(tmp_path):
     out = tmp_path / "gcp-imp"
     files = generate_import_project(disc, out)
     assert (out / "imports.tf").exists()
-    assert (out / "network.tf").exists()
+    assert (out / "main.tf").exists()
     assert (out / "subnets.tf").exists()
     assert (out / "routers.tf").exists()
     assert (out / "firewalls.tf").exists()
-    assert (out / "versions.tf").exists()
+    assert (out / "terraform.tf").exists()
+    assert (out / "providers.tf").exists()
     assert (out / "discovered.json").exists()
+    assert not (out / "network.tf").exists()
+    assert not (out / "versions.tf").exists()
 
     imports = (out / "imports.tf").read_text(encoding="utf-8")
     assert "google_compute_network.main" in imports
@@ -68,7 +71,7 @@ def test_generate_gcp_import_project(tmp_path):
     assert "google_compute_firewall." in imports
     assert "projects/demo-billing-project/global/networks/legacy-vpc" in imports
 
-    net = (out / "network.tf").read_text(encoding="utf-8")
+    net = (out / "main.tf").read_text(encoding="utf-8")
     assert "google_compute_network" in net
     assert "auto_create_subnetworks" in net
 
@@ -83,13 +86,20 @@ def test_generate_azure_import_project(tmp_path):
     out = tmp_path / "az-imp"
     generate_import_project(disc, out)
     assert (out / "imports.tf").exists()
-    assert (out / "resource_group.tf").exists()
-    assert (out / "network.tf").exists()
+    assert (out / "main.tf").exists()
+    assert (out / "terraform.tf").exists()
+    assert (out / "providers.tf").exists()
     assert (out / "subnets.tf").exists()
     assert (out / "nsg.tf").exists()
     assert (out / "routes.tf").exists()
     assert (out / "public_ips.tf").exists()
     assert (out / "nat.tf").exists()
+    assert not (out / "resource_group.tf").exists()
+    assert not (out / "network.tf").exists()
+
+    main = (out / "main.tf").read_text(encoding="utf-8")
+    assert "azurerm_resource_group" in main
+    assert "azurerm_virtual_network" in main
 
     imports = (out / "imports.tf").read_text(encoding="utf-8")
     assert "azurerm_virtual_network.main" in imports
@@ -114,8 +124,8 @@ def test_cli_import_gcp_inventory(tmp_path):
         ]
     )
     assert rc == 0
-    assert (out / "network.tf").exists()
-    assert "google_compute_network" in (out / "network.tf").read_text(encoding="utf-8")
+    assert (out / "main.tf").exists()
+    assert "google_compute_network" in (out / "main.tf").read_text(encoding="utf-8")
 
 
 def test_cli_import_azure_inventory(tmp_path):
@@ -130,8 +140,8 @@ def test_cli_import_azure_inventory(tmp_path):
         ]
     )
     assert rc == 0
-    assert (out / "network.tf").exists()
-    assert "azurerm_virtual_network" in (out / "network.tf").read_text(encoding="utf-8")
+    assert (out / "main.tf").exists()
+    assert "azurerm_virtual_network" in (out / "main.tf").read_text(encoding="utf-8")
 
 
 @pytest.mark.terraform

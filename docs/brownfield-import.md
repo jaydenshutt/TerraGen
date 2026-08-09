@@ -120,29 +120,31 @@ Sample IDs use a zero GUID subscription — **replace with real IDs before apply
 
 ```
 imported/
+├── terraform.tf / providers.tf / main.tf / outputs.tf
 ├── imports.tf
-├── vpc.tf / subnets.tf / gateways.tf / routes.tf
+├── subnets.tf / gateways.tf / routes.tf
 ├── security.tf / acls.tf / endpoints.tf
-├── versions.tf / outputs.tf / discovered.json / README.md
+├── discovered.json / README.md
 ```
 
 ### GCP
 
 ```
 imported/
+├── terraform.tf / providers.tf / main.tf / outputs.tf
 ├── imports.tf
-├── network.tf / subnets.tf / routers.tf / firewalls.tf
-├── versions.tf / outputs.tf / discovered.json / README.md
+├── subnets.tf / routers.tf / firewalls.tf
+├── discovered.json / README.md
 ```
 
 ### Azure
 
 ```
 imported/
+├── terraform.tf / providers.tf / main.tf / outputs.tf
 ├── imports.tf
-├── resource_group.tf / network.tf / subnets.tf
-├── nsg.tf / routes.tf / public_ips.tf / nat.tf
-├── versions.tf / outputs.tf / discovered.json / README.md
+├── subnets.tf / nsg.tf / routes.tf / public_ips.tf / nat.tf
+├── discovered.json / README.md
 ```
 
 ---

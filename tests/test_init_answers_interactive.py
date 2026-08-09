@@ -82,7 +82,7 @@ def test_init_answers_interactive_mocked(tmp_path):
     assert data["project"] == "wizard-app"
     assert data["cloud"] == "gcp"
     # No terraform project files next to it
-    assert not (tmp_path / "network.tf").exists()
+    assert not (tmp_path / "main.tf").exists()
     assert not list(tmp_path.glob("*-terraform"))
 
 

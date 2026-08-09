@@ -36,7 +36,9 @@ def test_generate_deep_project_files(tmp_path):
     files = generate_import_project(disc, out)
 
     assert (out / "imports.tf").exists()
-    assert (out / "vpc.tf").exists()
+    assert (out / "main.tf").exists()
+    assert (out / "terraform.tf").exists()
+    assert (out / "providers.tf").exists()
     assert (out / "subnets.tf").exists()
     assert (out / "gateways.tf").exists()
     assert (out / "routes.tf").exists()
@@ -46,6 +48,8 @@ def test_generate_deep_project_files(tmp_path):
     assert (out / "outputs.tf").exists()
     assert (out / "discovered.json").exists()
     assert (out / "README.md").exists()
+    assert not (out / "vpc.tf").exists()
+    assert not (out / "versions.tf").exists()
 
     imports = (out / "imports.tf").read_text()
     assert "aws_vpc.main" in imports
@@ -59,7 +63,7 @@ def test_generate_deep_project_files(tmp_path):
     assert "aws_network_acl." in imports
     assert "aws_vpc_endpoint." in imports
 
-    vpc = (out / "vpc.tf").read_text()
+    vpc = (out / "main.tf").read_text()
     assert 'cidr_block           = "10.0.0.0/16"' in vpc or 'cidr_block' in vpc
     assert "enable_dns_support" in vpc
 
@@ -101,7 +105,7 @@ def test_legacy_inventory_still_loads(tmp_path):
     assert disc.internet_gateways and disc.internet_gateways[0]["id"] == "igw-legacy"
     out = tmp_path / "out"
     generate_import_project(disc, out)
-    assert (out / "vpc.tf").exists()
+    assert (out / "main.tf").exists()
     assert "vpc-legacy" in (out / "imports.tf").read_text()
 
 

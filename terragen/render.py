@@ -72,17 +72,25 @@ def _tf_value(value) -> str:
 
 
 def _plan_flat(cfg: TerraGenConfig) -> List[tuple[str, str]]:
-    """Flat single-root project (default)."""
+    """
+    Flat single-root project (default).
+
+    HashiCorp-aligned names:
+      terraform.tf, providers.tf, variables.tf, outputs.tf, main.tf, backend.tf
+    Additional resource files (security, cluster, …) keep domain splits for
+    large multi-cloud stacks — allowed for complex modules.
+    """
     cloud = cfg.cloud
     files: List[tuple[str, str]] = [
-        ("versions.tf.j2", "versions.tf"),
+        ("versions.tf.j2", "terraform.tf"),
         ("providers.tf.j2", "providers.tf"),
         ("variables.tf.j2", "variables.tf"),
         ("outputs.tf.j2", "outputs.tf"),
         ("terraform.tfvars.j2", "terraform.tfvars"),
         ("gitignore.j2", ".gitignore"),
         ("README.md.j2", "README.md"),
-        (f"{cloud}/network.tf.j2", "network.tf"),
+        # Primary entrypoint (was network.tf) — HashiCorp standard module structure
+        (f"{cloud}/network.tf.j2", "main.tf"),
         (f"{cloud}/security.tf.j2", "security.tf"),
     ]
 
@@ -104,19 +112,19 @@ def _plan_flat(cfg: TerraGenConfig) -> List[tuple[str, str]]:
 
 def _plan_modular(cfg: TerraGenConfig) -> List[tuple[str, str]]:
     """
-    Modular layout:
-      modules/network/   reusable module (no provider/backend)
-      envs/<env>/        thin roots calling the module
+    Modular layout (HashiCorp-style):
+      modules/network/   reusable module: main.tf + variables.tf + outputs.tf
+      envs/<env>/        thin roots: main.tf calls the module
       bootstrap/         shared state backend
     """
     cloud = cfg.cloud
     mod = "modules/network"
     files: List[tuple[str, str]] = [
-        # Module
-        ("layout/module_versions.tf.j2", f"{mod}/versions.tf"),
+        # Module — standard structure: main.tf, variables.tf, outputs.tf, terraform.tf
+        ("layout/module_versions.tf.j2", f"{mod}/terraform.tf"),
         ("variables.tf.j2", f"{mod}/variables.tf"),
         ("outputs.tf.j2", f"{mod}/outputs.tf"),
-        (f"{cloud}/network.tf.j2", f"{mod}/network.tf"),
+        (f"{cloud}/network.tf.j2", f"{mod}/main.tf"),
         (f"{cloud}/security.tf.j2", f"{mod}/security.tf"),
         ("gitignore.j2", ".gitignore"),
         ("README.md.j2", "README.md"),
@@ -135,7 +143,7 @@ def _plan_modular(cfg: TerraGenConfig) -> List[tuple[str, str]]:
         prefix = f"envs/{env}"
         files.extend(
             [
-                ("versions.tf.j2", f"{prefix}/versions.tf"),
+                ("versions.tf.j2", f"{prefix}/terraform.tf"),
                 ("layout/env_providers.tf.j2", f"{prefix}/providers.tf"),
                 ("layout/env_main.tf.j2", f"{prefix}/main.tf"),
                 ("layout/env_outputs.tf.j2", f"{prefix}/outputs.tf"),

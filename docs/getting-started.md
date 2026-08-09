@@ -101,7 +101,7 @@ python -m terragen generate -a examples/answers-aws.yaml -o ./my-network --force
 ```bash
 cd my-network   # or the path from --out / project name
 ls
-# expect: network.tf, variables.tf, providers.tf, backend.tf, bootstrap/, README.md, …
+# expect: main.tf, variables.tf, outputs.tf, providers.tf, terraform.tf, backend.tf, bootstrap/, …
 ```
 
 Read the **generated `README.md`** in that folder — it is tailored to your cloud and options.

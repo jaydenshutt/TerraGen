@@ -2,40 +2,6 @@
 
 TerraGen can write a **flat** project or a **modular** multi-environment tree.
 
-## HashiCorp conventions (how we compare)
-
-HashiCorp documents two closely related recommendations:
-
-1. **[Standard module structure](https://developer.hashicorp.com/terraform/language/modules/develop/structure)** — reusable modules should have at least `main.tf`, `variables.tf`, `outputs.tf` (and usually `README.md`). For complex modules, resources may be **split across multiple `.tf` files**, but nested **module calls** should live in `main.tf`.
-2. **[Style guide — file names](https://developer.hashicorp.com/terraform/language/style)** — common root layout:
-   - `main.tf` — resources / data sources (or module calls)
-   - `variables.tf` — input variables
-   - `outputs.tf` — outputs
-   - `providers.tf` — provider blocks
-   - `terraform.tf` / versions — `required_version` / `required_providers` (TerraGen uses `versions.tf`)
-   - `backend.tf` — backend configuration
-   - `locals.tf` — optional locals
-   - `terraform.tfvars` — variable values
-
-Terraform itself only requires `*.tf` in a directory; filenames are **convention**, not a hard parser rule.
-
-### Does TerraGen meet the standard?
-
-| Convention | Flat layout | Modular layout |
-|------------|-------------|----------------|
-| `variables.tf` for inputs | **Yes** | **Yes** (`modules/network/variables.tf`) |
-| `outputs.tf` for outputs | **Yes** | **Yes** (module + env `outputs.tf`) |
-| `providers.tf` | **Yes** | **Yes** (`envs/<env>/providers.tf`) |
-| Backend separate (`backend.tf`) | **Yes** (optional) | **Yes** per env |
-| Version constraints | **Yes** (`versions.tf`) | **Yes** |
-| `main.tf` as primary entry / module calls | **Partial** — resources live in **domain files** (`network.tf`, `security.tf`, `cluster.tf`, …), not a single `main.tf` | **Yes for env roots** — `envs/<env>/main.tf` holds `module "network" { ... }` |
-| Module has `main.tf` + variables + outputs | N/A | **Partial** — module has `variables.tf` + `outputs.tf` + domain files (`network.tf`, …); no single `main.tf` name |
-| Nested module calls only in `main.tf` | N/A | **Yes** — only env `main.tf` calls the network module |
-
-**Summary:** TerraGen follows HashiCorp on **variables / outputs / providers / backend / versions**, and on **modular roots calling modules via `main.tf`**. Flat (and the shared network module) use **purpose-split resource files** (`network.tf`, `security.tf`, …), which HashiCorp allows for complex modules, but the **filename** is not always `main.tf`. That is intentional: multi-cloud network stacks are large; splitting by concern is easier to navigate than one giant `main.tf`.
-
-Industry practice (AWS, Google, many module registries) also commonly uses `vpc.tf` / `security.tf`-style splits alongside `variables.tf` and `outputs.tf`.
-
 ```yaml
 layout: flat      # default
 # or
@@ -50,17 +16,44 @@ environments:
 python -m terragen generate -a answers.yaml --layout modular --environments dev,prod -o ./infra --force
 ```
 
+## HashiCorp standard (we match this)
+
+TerraGen targets HashiCorp’s recommended names:
+
+| File | Role |
+|------|------|
+| **`main.tf`** | Primary entry — core network resources **or** `module` calls |
+| **`variables.tf`** | Input variables |
+| **`outputs.tf`** | Outputs |
+| **`providers.tf`** | Provider configuration |
+| **`terraform.tf`** | `required_version` + `required_providers` |
+| **`backend.tf`** | Remote state backend (optional) |
+| **`terraform.tfvars`** | Default variable values |
+
+References:
+
+- [Standard module structure](https://developer.hashicorp.com/terraform/language/modules/develop/structure)
+- [Style guide — file names](https://developer.hashicorp.com/terraform/language/style)
+
+**Complex stacks:** HashiCorp allows splitting resources across additional `.tf` files. TerraGen keeps focused files such as `security.tf`, `cluster.tf`, `hub_spoke.tf`, and `observability.tf` next to `main.tf` so large multi-cloud projects stay readable. Nested **module** blocks always live in `main.tf` (modular env roots).
+
 ## Flat (default)
 
 ```
 my-project-dev-terraform/
-├── network.tf
-├── security.tf
-├── variables.tf
+├── terraform.tf       # required_version / providers
 ├── providers.tf
-├── backend.tf
+├── variables.tf
+├── outputs.tf
+├── main.tf            # core VPC / VNet / subnets / NAT / routes
+├── security.tf
+├── observability.tf   # optional
+├── cluster.tf         # optional
+├── hub_spoke.tf       # optional
+├── backend.tf         # optional
+├── terraform.tfvars
 ├── bootstrap/
-├── oidc/            # if enabled
+├── oidc/              # if enabled
 ├── .github/workflows/
 └── README.md
 ```
@@ -71,14 +64,23 @@ my-project-dev-terraform/
 
 ```
 infra/
-├── modules/network/     # shared module (network + optional cluster/hub)
+├── modules/network/
+│   ├── terraform.tf
+│   ├── main.tf          # core network resources
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── security.tf
+│   └── …                # cluster.tf / hub_spoke.tf when enabled
 ├── envs/
 │   ├── dev/
-│   │   ├── main.tf      # module "network" { ... }
+│   │   ├── terraform.tf
 │   │   ├── providers.tf
-│   │   └── backend.tf
+│   │   ├── main.tf      # module "network" { … }
+│   │   ├── outputs.tf
+│   │   ├── backend.tf
+│   │   └── terraform.tfvars
 │   └── prod/
-├── bootstrap/           # shared once
+├── bootstrap/
 ├── oidc/
 └── README.md
 ```
@@ -98,3 +100,5 @@ terraform apply
 ## Regenerating
 
 Use `--force` on an existing TerraGen output (directory must contain `.terragen-generated` or be empty of foreign content).
+
+**Note:** Older TerraGen versions used `network.tf` / `versions.tf`. From **3.0.3+** those map to **`main.tf`** / **`terraform.tf`**. Re-generate with `--force` (or rename files) when upgrading.

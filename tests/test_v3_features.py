@@ -145,7 +145,7 @@ def test_ipv6_render_aws(tmp_path):
     )
     out = tmp_path / "ipv6"
     render_project(cfg, out, force=True)
-    net = (out / "network.tf").read_text()
+    net = (out / "main.tf").read_text()
     assert "assign_generated_ipv6_cidr_block" in net
     assert "egress_only_internet_gateway" in net
 
@@ -156,7 +156,7 @@ def test_brownfield_import_from_inventory(tmp_path):
     out = tmp_path / "imported"
     files = generate_import_project(disc, out)
     assert (out / "imports.tf").exists()
-    assert (out / "vpc.tf").exists()
+    assert (out / "main.tf").exists()
     assert "import {" in (out / "imports.tf").read_text()
     assert disc.vpc_id in (out / "imports.tf").read_text()
     assert len(files) >= 6

@@ -109,7 +109,7 @@ def test_modular_with_cluster_or_hub(tmp_path, blueprint, cloud, region, extra):
     render_project(cfg, out, force=True)
 
     mod = out / "modules" / "network"
-    assert (mod / "network.tf").exists()
+    assert (mod / "main.tf").exists()
     assert (out / "envs" / "dev" / "main.tf").exists()
     assert (out / "envs" / "prod" / "main.tf").exists()
 

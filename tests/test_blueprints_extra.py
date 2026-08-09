@@ -68,7 +68,7 @@ def test_blueprint_renders(tmp_path, blueprint, cloud):
     assert validate_config(cfg).ok, validate_config(cfg).errors
     out = tmp_path / blueprint
     render_project(cfg, out, force=True)
-    assert (out / "network.tf").exists() or (out / "modules" / "network" / "network.tf").exists()
+    assert (out / "main.tf").exists() or (out / "modules" / "network" / "main.tf").exists()
 
 
 def test_private_blueprint_no_public():

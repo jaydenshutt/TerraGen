@@ -89,7 +89,7 @@ python -m terragen generate -a examples/answers-aws.yaml -o ./my-network --force
 
 **Credentials:** `generate` is local-only. Configure AWS / GCP / Azure before `terraform plan` / `apply`, bootstrap, or live import — see **[Cloud credentials](docs/cloud-credentials.md)**.
 
-**Generated file layout:** outputs and variables live in `outputs.tf` / `variables.tf`; modular env roots use `main.tf` for module calls. Flat stacks split resources by domain (`network.tf`, `security.tf`, …). See [Layouts](docs/layouts.md#hashicorp-conventions-how-we-compare).
+**Generated file layout:** HashiCorp-aligned `main.tf`, `variables.tf`, `outputs.tf`, `providers.tf`, `terraform.tf` (+ domain files like `security.tf` for large stacks). See [Layouts](docs/layouts.md).
 
 ---
 
@@ -264,16 +264,18 @@ See `examples/` for full samples per cloud.
 
 ## Generated layout
 
+HashiCorp-style names (`main.tf`, `variables.tf`, `outputs.tf`, `providers.tf`, `terraform.tf`):
+
 ```
 my-app-dev-terraform/
-├── versions.tf
+├── terraform.tf              # required_version + required_providers
 ├── providers.tf
 ├── variables.tf
-├── terraform.tfvars
-├── network.tf
+├── outputs.tf
+├── main.tf                   # core network (VPC/VNet, subnets, NAT, routes)
 ├── security.tf
 ├── observability.tf          # when flow logs / GuardDuty / billing enabled
-├── outputs.tf
+├── terraform.tfvars
 ├── backend.tf
 ├── bootstrap/                # create state backend once
 │   ├── main.tf

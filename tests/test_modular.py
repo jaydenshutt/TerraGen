@@ -27,9 +27,16 @@ def test_modular_layout_structure(tmp_path):
     assert cfg.env_list == ["dev", "prod"]
     out = tmp_path / "mod"
     result = render_project(cfg, out, force=True)
-    assert (out / "modules" / "network" / "network.tf").exists()
+    mod = out / "modules" / "network"
+    assert (mod / "main.tf").exists()
+    assert (mod / "variables.tf").exists()
+    assert (mod / "outputs.tf").exists()
+    assert (mod / "terraform.tf").exists()
+    assert not (mod / "network.tf").exists()
+    assert not (mod / "versions.tf").exists()
     assert (out / "envs" / "dev" / "main.tf").exists()
     assert (out / "envs" / "prod" / "main.tf").exists()
+    assert (out / "envs" / "dev" / "terraform.tf").exists()
     assert (out / "envs" / "dev" / "backend.tf").exists()
     main_tf = (out / "envs" / "dev" / "main.tf").read_text()
     assert 'source = "../../modules/network"' in main_tf
@@ -55,7 +62,7 @@ def test_private_only_aws(tmp_path):
 
     out = tmp_path / "priv"
     render_project(cfg, out, force=True)
-    net = (out / "network.tf").read_text()
+    net = (out / "main.tf").read_text()
     assert "aws_vpc_endpoint" in net
     assert "interface" in net
     assert "enable_if_eps" in net or "interface_endpoints" in net

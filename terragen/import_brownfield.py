@@ -1036,7 +1036,7 @@ def _aws_import_files(disc: DiscoveredNetwork) -> Dict[str, str]:
         )
 
     region = disc.region or "us-east-1"
-    versions = f'''terraform {{
+    terraform_tf = f'''terraform {{
   required_version = ">= 1.5.0"
   required_providers {{
     aws = {{
@@ -1045,8 +1045,8 @@ def _aws_import_files(disc: DiscoveredNetwork) -> Dict[str, str]:
     }}
   }}
 }}
-
-provider "aws" {{
+'''
+    providers_tf = f'''provider "aws" {{
   region = {_hcl_str(region)}
 }}
 '''
@@ -1114,9 +1114,11 @@ terragen import --cloud aws --vpc-id {disc.vpc_id} --region {region} --out .
 '''
 
     files: Dict[str, str] = {
-        "versions.tf": versions,
+        # HashiCorp-aligned names
+        "terraform.tf": terraform_tf,
+        "providers.tf": providers_tf,
+        "main.tf": "\n".join(blocks["vpc"]) + "\n",
         "imports.tf": "\n".join(imports) + "\n",
-        "vpc.tf": "\n".join(blocks["vpc"]) + "\n",
         "subnets.tf": "\n".join(blocks["subnets"]) + "\n" if blocks["subnets"] else "",
         "gateways.tf": "\n".join(blocks["gateways"]) + "\n" if blocks["gateways"] else "",
         "routes.tf": "\n".join(blocks["routes"]) + "\n" if blocks["routes"] else "",
@@ -1396,7 +1398,7 @@ def _gcp_import_files(disc: DiscoveredNetwork) -> Dict[str, str]:
             + "\n  }\n}\n"
         )
 
-    versions = '''terraform {
+    terraform_tf = '''terraform {
   required_version = ">= 1.5.0"
   required_providers {
     google = {
@@ -1405,12 +1407,13 @@ def _gcp_import_files(disc: DiscoveredNetwork) -> Dict[str, str]:
     }
   }
 }
-
-provider "google" {
-  project = ''' + _hcl_str(disc.project_id) + '''
-  region  = ''' + _hcl_str(disc.region or "us-central1") + '''
-}
 '''
+    providers_tf = (
+        "provider \"google\" {\n"
+        f"  project = {_hcl_str(disc.project_id)}\n"
+        f"  region  = {_hcl_str(disc.region or 'us-central1')}\n"
+        "}\n"
+    )
 
     readme = f'''# Brownfield import — GCP (inventory)
 
@@ -1446,9 +1449,10 @@ terraform plan    # expect import-only + possible attribute drift
 '''
 
     files: Dict[str, str] = {
-        "versions.tf": versions,
+        "terraform.tf": terraform_tf,
+        "providers.tf": providers_tf,
+        "main.tf": "\n".join(net_blocks) + "\n",
         "imports.tf": "\n".join(imports) + "\n",
-        "network.tf": "\n".join(net_blocks) + "\n",
         "subnets.tf": "\n".join(subnet_blocks) + "\n" if subnet_blocks else "# no subnets\n",
         "outputs.tf": "\n".join(outputs) + "\n",
         "README.md": readme,
@@ -1736,7 +1740,7 @@ def _azure_import_files(disc: DiscoveredNetwork) -> Dict[str, str]:
             + "\n  }\n}\n"
         )
 
-    versions = '''terraform {
+    terraform_tf = '''terraform {
   required_version = ">= 1.5.0"
   required_providers {
     azurerm = {
@@ -1745,8 +1749,8 @@ def _azure_import_files(disc: DiscoveredNetwork) -> Dict[str, str]:
     }
   }
 }
-
-provider "azurerm" {
+'''
+    providers_tf = '''provider "azurerm" {
   features {}
 }
 '''
@@ -1788,11 +1792,13 @@ Replace sample subscription GUIDs in import IDs with your real IDs before apply.
 - See `examples/inventory-azure-sample.json` and docs/brownfield-import.md.
 '''
 
+    # main.tf = resource group + VNet (primary entry); domain splits for the rest
+    main_blocks = "\n".join(rg_blocks + vnet_blocks) + "\n"
     files: Dict[str, str] = {
-        "versions.tf": versions,
+        "terraform.tf": terraform_tf,
+        "providers.tf": providers_tf,
+        "main.tf": main_blocks,
         "imports.tf": "\n".join(imports) + "\n",
-        "resource_group.tf": "\n".join(rg_blocks) + "\n",
-        "network.tf": "\n".join(vnet_blocks) + "\n",
         "subnets.tf": "\n".join(subnet_blocks) + "\n" if subnet_blocks else "# no subnets\n",
         "outputs.tf": "\n".join(outputs) + "\n",
         "README.md": readme,

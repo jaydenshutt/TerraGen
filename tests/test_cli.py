@@ -65,8 +65,8 @@ def test_generate_noninteractive(tmp_path):
         ]
     )
     assert rc == 0
-    assert (out / "network.tf").exists()
-    assert (out / "versions.tf").exists()
+    assert (out / "main.tf").exists()
+    assert (out / "terraform.tf").exists()
 
 
 def test_generate_from_answers(tmp_path):
@@ -84,8 +84,8 @@ def test_generate_from_answers(tmp_path):
     )
     out = tmp_path / "gcp-out"
     assert main(["generate", "--answers", str(answers), "--out", str(out), "--force"]) == 0
-    assert (out / "network.tf").exists()
-    assert "google_compute_network" in (out / "network.tf").read_text()
+    assert (out / "main.tf").exists()
+    assert "google_compute_network" in (out / "main.tf").read_text()
 
 
 def test_dry_run(tmp_path, capsys):

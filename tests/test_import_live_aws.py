@@ -92,7 +92,7 @@ def test_live_discover_aws_vpc_readonly(tmp_path, live_aws_region: str):
     out = tmp_path / "live-import"
     files = generate_import_project(disc, out)
     assert (out / "imports.tf").exists()
-    assert (out / "vpc.tf").exists()
+    assert (out / "main.tf").exists()
     assert (out / "discovered.json").exists()
     assert vpc_id in (out / "imports.tf").read_text(encoding="utf-8")
     assert len(files) >= 6

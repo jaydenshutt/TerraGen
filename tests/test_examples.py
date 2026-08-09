@@ -54,10 +54,10 @@ def test_every_example_loads_validates_and_renders(tmp_path, name: str):
         for env in cfg.env_list:
             assert (out / "envs" / env / "main.tf").exists(), env
     else:
-        assert (out / "network.tf").exists() or (
+        assert (out / "main.tf").exists() or (
             cfg.enable_hub_spoke and (out / "hub_spoke.tf").exists()
         )
-        assert (out / "versions.tf").exists()
+        assert (out / "terraform.tf").exists()
 
     assert (out / "terragen.answers.yaml").exists()
     assert (out / ".terragen-generated").exists()
