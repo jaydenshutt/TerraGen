@@ -118,10 +118,17 @@ def test_modular_with_cluster_or_hub(tmp_path, blueprint, cloud, region, extra):
     assert (out / "envs" / "prod" / "main.tf").exists()
 
     if cfg.enable_cluster:
-        assert (mod / "cluster.tf").exists()
-        # env root should pass enable_cluster into module
+        cmod = out / "modules" / "cluster"
+        assert cmod.is_dir()
+        assert (cmod / "main.tf").exists()
+        assert (cmod / "variables.tf").exists()
+        assert (cmod / "terraform.tf").exists()
+        # Cluster must NOT live inside the network module
+        assert not (mod / "cluster.tf").exists()
         main = (out / "envs" / "dev" / "main.tf").read_text(encoding="utf-8")
-        assert "enable_cluster" in main
+        assert 'module "cluster"' in main
+        assert 'module "network"' in main
+        assert "module.network" in main or "module.network." in main
     if cfg.enable_hub_spoke:
         assert (mod / "hub_spoke.tf").exists()
         main = (out / "envs" / "dev" / "main.tf").read_text(encoding="utf-8")

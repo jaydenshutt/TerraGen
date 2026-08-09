@@ -1,0 +1,90 @@
+# Cluster module inputs — wired from env root via module.network outputs
+variable "project" {
+  description = "Project name used to prefix resources."
+  type        = string
+  default     = {{ project | tf }}
+}
+
+variable "environment" {
+  description = "Deployment environment."
+  type        = string
+  default     = {{ environment | tf }}
+}
+
+variable "region" {
+  description = "Cloud region or Azure location."
+  type        = string
+  default     = {{ region | tf }}
+}
+
+variable "tags" {
+  description = "Tags / labels applied to supported resources."
+  type        = map(string)
+  default     = {{ tags | tf }}
+}
+
+variable "cluster_name" {
+  description = "Managed Kubernetes cluster name."
+  type        = string
+  default     = {{ cluster_name | tf }}
+}
+
+{% if cloud == "aws" %}
+variable "vpc_id" {
+  description = "VPC ID for the EKS control plane and node groups."
+  type        = string
+}
+
+variable "private_subnet_ids" {
+  description = "Private subnet IDs for EKS nodes (and control plane when private)."
+  type        = list(string)
+}
+
+variable "public_subnet_ids" {
+  description = "Public subnet IDs included in the EKS control plane ENI set."
+  type        = list(string)
+  default     = []
+}
+
+variable "app_security_group_id" {
+  description = "Application / node security group allowed to reach the API."
+  type        = string
+}
+{% elif cloud == "gcp" %}
+variable "gcp_project_id" {
+  description = "GCP project ID."
+  type        = string
+  default     = {{ gcp_project | tf }}
+}
+
+variable "network_name" {
+  description = "VPC network name for GKE."
+  type        = string
+}
+
+variable "private_subnet_name" {
+  description = "Primary private subnet name (must include GKE secondary ranges)."
+  type        = string
+}
+{% elif cloud == "azure" %}
+variable "resource_group_name" {
+  description = "Resource group containing the VNet and AKS cluster."
+  type        = string
+}
+
+variable "location" {
+  description = "Azure location (usually same as region)."
+  type        = string
+  default     = {{ region | tf }}
+}
+
+variable "vnet_id" {
+  description = "Virtual network ID (for Network Contributor role)."
+  type        = string
+}
+
+variable "private_subnet_id" {
+  description = "Private subnet ID for the AKS system node pool."
+  type        = string
+}
+{% endif %}

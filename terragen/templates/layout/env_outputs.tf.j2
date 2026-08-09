@@ -1,4 +1,4 @@
-# Pass-through outputs from the network module
+# Pass-through outputs from network (+ cluster) modules
 
 output "terragen_metadata" {
   description = "Generation metadata for this environment root."
@@ -8,6 +8,7 @@ output "terragen_metadata" {
     cloud       = {{ cloud | tf }}
     blueprint   = {{ blueprint | tf }}
     layout      = "modular"
+    cluster_module = {{ enable_cluster | tf }}
   }
 }
 
@@ -33,10 +34,13 @@ output "default_security_group_id" {
 }
 {% if enable_cluster %}
 output "eks_cluster_name" {
-  value = try(module.network.eks_cluster_name, null)
+  value = module.cluster.eks_cluster_name
 }
 output "eks_cluster_endpoint" {
-  value = try(module.network.eks_cluster_endpoint, null)
+  value = module.cluster.eks_cluster_endpoint
+}
+output "eks_cluster_arn" {
+  value = module.cluster.eks_cluster_arn
 }
 {% endif %}
 {% if enable_hub_spoke %}
@@ -52,6 +56,10 @@ output "network_id" {
   value = module.network.network_id
 }
 
+output "network_name" {
+  value = module.network.network_name
+}
+
 output "public_subnet_ids" {
   value = module.network.public_subnet_ids
 }
@@ -61,7 +69,11 @@ output "private_subnet_ids" {
 }
 {% if enable_cluster %}
 output "gke_cluster_name" {
-  value = try(module.network.gke_cluster_name, null)
+  value = module.cluster.gke_cluster_name
+}
+output "gke_cluster_endpoint" {
+  value     = module.cluster.gke_cluster_endpoint
+  sensitive = true
 }
 {% endif %}
 {% if enable_hub_spoke %}
@@ -87,7 +99,13 @@ output "private_subnet_ids" {
 }
 {% if enable_cluster %}
 output "aks_cluster_name" {
-  value = try(module.network.aks_cluster_name, null)
+  value = module.cluster.aks_cluster_name
+}
+output "aks_cluster_id" {
+  value = module.cluster.aks_cluster_id
+}
+output "aks_fqdn" {
+  value = module.cluster.aks_fqdn
 }
 {% endif %}
 {% if enable_hub_spoke %}

@@ -1,7 +1,27 @@
 # -----------------------------------------------------------------------------
 # Amazon EKS — control plane + managed node group
 # Blueprint: {{ blueprint }} | version: {{ cluster_version }}
-# -----------------------------------------------------------------------------
+{% if cluster_as_module %}# Module: modules/cluster (network provided via variables)
+{% else %}# Flat layout — uses VPC/subnets from this root module
+{% endif %}# -----------------------------------------------------------------------------
+
+{% if cluster_as_module %}
+locals {
+  name_prefix         = "${var.project}-${var.environment}"
+  eks_vpc_id          = var.vpc_id
+  eks_private_subnets = var.private_subnet_ids
+  eks_public_subnets  = var.public_subnet_ids
+  eks_node_sg_id      = var.app_security_group_id
+}
+{% else %}
+locals {
+  # name_prefix / VPC resources come from main.tf network locals
+  eks_vpc_id          = aws_vpc.main.id
+  eks_private_subnets = aws_subnet.private[*].id
+  eks_public_subnets  = aws_subnet.public[*].id
+  eks_node_sg_id      = aws_security_group.app.id
+}
+{% endif %}
 
 data "aws_iam_policy_document" "eks_cluster_assume" {
   statement {
@@ -58,7 +78,7 @@ resource "aws_iam_role_policy_attachment" "eks_ecr" {
 resource "aws_security_group" "eks_cluster" {
   name        = "${local.name_prefix}-eks-cluster-sg"
   description = "EKS control plane security group"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = local.eks_vpc_id
 
   egress {
     from_port   = 0
@@ -78,7 +98,7 @@ resource "aws_security_group_rule" "eks_cluster_ingress_nodes" {
   to_port                  = 443
   protocol                 = "tcp"
   security_group_id        = aws_security_group.eks_cluster.id
-  source_security_group_id = aws_security_group.app.id
+  source_security_group_id = local.eks_node_sg_id
   description              = "Nodes to API"
 }
 
@@ -88,7 +108,7 @@ resource "aws_eks_cluster" "main" {
   version  = {{ cluster_version | tf }}
 
   vpc_config {
-    subnet_ids              = concat(aws_subnet.private[*].id, aws_subnet.public[*].id)
+    subnet_ids              = concat(local.eks_private_subnets, local.eks_public_subnets)
     endpoint_private_access = {{ cluster_private_endpoint | tf }}
     endpoint_public_access  = true
     security_group_ids      = [aws_security_group.eks_cluster.id]
@@ -107,7 +127,7 @@ resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${local.name_prefix}-nodes"
   node_role_arn   = aws_iam_role.eks_node.arn
-  subnet_ids      = aws_subnet.private[*].id
+  subnet_ids      = local.eks_private_subnets
 
   scaling_config {
     desired_size = {{ node_desired_size }}

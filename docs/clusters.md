@@ -15,6 +15,25 @@ python -m terragen generate -a examples/answers-gke-cluster.yaml -o ./gke --forc
 python -m terragen generate -a examples/answers-aks-cluster.yaml -o ./aks --force
 ```
 
+### Modular layout (recommended multi-env)
+
+```bash
+python -m terragen generate \
+  -a examples/answers-eks-cluster.yaml \
+  --layout modular --environments dev,prod \
+  -o ./eks-mod --force
+```
+
+Produces:
+
+```text
+modules/network/   # VPC only
+modules/cluster/   # EKS/GKE/AKS only
+envs/dev/main.tf   # module "network" + module "cluster"
+```
+
+Cluster is **not** buried inside the network module. Env roots pass network outputs (VPC/subnet IDs) into the cluster module.
+
 ## What you get (high level)
 
 ### EKS (`eks-cluster`)

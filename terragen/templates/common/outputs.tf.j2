@@ -92,6 +92,11 @@ output "private_subnet_ids" {
   value       = google_compute_subnetwork.private[*].id
 }
 
+output "private_subnet_names" {
+  description = "Names of private subnets (for GKE / consumers that need names)."
+  value       = google_compute_subnetwork.private[*].name
+}
+
 output "public_subnet_cidrs" {
   description = "CIDR ranges of public subnets."
   value       = google_compute_subnetwork.public[*].ip_cidr_range

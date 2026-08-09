@@ -1,14 +1,29 @@
 # -----------------------------------------------------------------------------
 # Google Kubernetes Engine (Standard) — VPC-native
 # Blueprint: {{ blueprint }}
-# -----------------------------------------------------------------------------
+{% if cluster_as_module %}# Module: modules/cluster (network provided via variables)
+{% else %}# Flat layout — uses VPC/subnets from this root module
+{% endif %}# -----------------------------------------------------------------------------
+
+{% if cluster_as_module %}
+locals {
+  name_prefix           = "${var.project}-${var.environment}"
+  gke_network_name      = var.network_name
+  gke_private_subnet    = var.private_subnet_name
+}
+{% else %}
+locals {
+  gke_network_name   = google_compute_network.main.name
+  gke_private_subnet = google_compute_subnetwork.private[0].name
+}
+{% endif %}
 
 resource "google_container_cluster" "main" {
   name     = {{ cluster_name | tf }}
   location = var.region
 
-  network    = google_compute_network.main.name
-  subnetwork = google_compute_subnetwork.private[0].name
+  network    = local.gke_network_name
+  subnetwork = local.gke_private_subnet
 
   # Remove default node pool; we manage a separate pool
   remove_default_node_pool = true
@@ -39,10 +54,12 @@ resource "google_container_cluster" "main" {
     environment = var.environment
     managed_by  = "terragen"
   }
+{% if not cluster_as_module %}
 
   depends_on = [
     google_compute_subnetwork.private,
   ]
+{% endif %}
 }
 
 resource "google_container_node_pool" "main" {

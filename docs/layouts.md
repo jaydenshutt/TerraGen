@@ -66,16 +66,20 @@ my-project-dev-terraform/
 infra/
 ├── modules/network/
 │   ├── terraform.tf
-│   ├── main.tf          # core network resources
+│   ├── main.tf          # VPC/VNet, subnets, NAT, routes
 │   ├── variables.tf
 │   ├── outputs.tf
 │   ├── security.tf
-│   └── …                # cluster.tf / hub_spoke.tf when enabled
+│   └── hub_spoke.tf     # when hub-spoke enabled
+├── modules/cluster/     # when EKS/GKE/AKS cluster blueprint enabled
+│   ├── terraform.tf
+│   ├── main.tf          # control plane + node pool
+│   └── variables.tf     # vpc_id / subnets from network module
 ├── envs/
 │   ├── dev/
 │   │   ├── terraform.tf
 │   │   ├── providers.tf
-│   │   ├── main.tf      # module "network" { … }
+│   │   ├── main.tf      # module "network" + optional module "cluster"
 │   │   ├── outputs.tf
 │   │   ├── backend.tf
 │   │   └── terraform.tfvars
@@ -84,6 +88,8 @@ infra/
 ├── oidc/
 └── README.md
 ```
+
+**Cluster split:** Managed Kubernetes is a **sibling** of the network module (`modules/cluster`), not nested inside `modules/network`. Env roots pass `module.network` outputs into `module.cluster` (VPC/subnet IDs, etc.).
 
 **Best for:** same network design across environments with separate state keys.
 

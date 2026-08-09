@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.4 — 2026-08-09
+
+### Added
+- **Modular cluster split:** with `layout: modular` and a cluster blueprint, TerraGen emits
+  `modules/network` (VPC only) and **`modules/cluster`** (EKS/GKE/AKS) as sibling modules.
+  Env roots call both from `main.tf` and wire network outputs into the cluster module.
+- Docs: layouts + clusters describe the split; tests cover AWS/GCP/Azure modular cluster trees
+  and terraform validate on modular cluster profiles.
+
 ## 3.0.3 — 2026-08-09
 
 ### Changed

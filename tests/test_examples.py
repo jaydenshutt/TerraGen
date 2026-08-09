@@ -63,12 +63,13 @@ def test_every_example_loads_validates_and_renders(tmp_path, name: str):
     assert (out / ".terragen-generated").exists()
 
     if cfg.enable_cluster:
-        cluster = (
-            out / "cluster.tf"
-            if not cfg.is_modular
-            else out / "modules" / "network" / "cluster.tf"
-        )
-        assert cluster.exists(), f"{name}: expected cluster.tf"
+        if cfg.is_modular:
+            cluster = out / "modules" / "cluster" / "main.tf"
+            assert cluster.exists(), f"{name}: expected modules/cluster/main.tf"
+            assert not (out / "modules" / "network" / "cluster.tf").exists()
+        else:
+            cluster = out / "cluster.tf"
+            assert cluster.exists(), f"{name}: expected cluster.tf"
     if cfg.enable_hub_spoke:
         hub = (
             out / "hub_spoke.tf"

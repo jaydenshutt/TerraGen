@@ -44,6 +44,71 @@ def test_modular_layout_structure(tmp_path):
     assert any("oidc" in f for f in result.relative_files)
 
 
+def test_modular_cluster_split_eks(tmp_path):
+    """EKS cluster must be a sibling module, not nested under modules/network."""
+    cfg = TerraGenConfig.from_dict(
+        {
+            "project": "demo-mod-eks",
+            "cloud": "aws",
+            "blueprint": "eks-cluster",
+            "layout": "modular",
+            "environments": ["dev"],
+            "az_count": 2,
+        }
+    )
+    assert cfg.enable_cluster
+    out = tmp_path / "mod-eks"
+    render_project(cfg, out, force=True)
+
+    assert (out / "modules" / "network" / "main.tf").exists()
+    assert not (out / "modules" / "network" / "cluster.tf").exists()
+    assert (out / "modules" / "cluster" / "main.tf").exists()
+    assert (out / "modules" / "cluster" / "variables.tf").exists()
+
+    cluster_main = (out / "modules" / "cluster" / "main.tf").read_text(encoding="utf-8")
+    assert "aws_eks_cluster" in cluster_main
+    assert "var.vpc_id" in cluster_main
+    assert "aws_vpc.main" not in cluster_main
+
+    env_main = (out / "envs" / "dev" / "main.tf").read_text(encoding="utf-8")
+    assert 'module "network"' in env_main
+    assert 'module "cluster"' in env_main
+    assert "module.network.vpc_id" in env_main
+    assert "enable_cluster              = false" in env_main or "enable_cluster = false" in env_main.replace(
+        " ", ""
+    )
+
+    env_out = (out / "envs" / "dev" / "outputs.tf").read_text(encoding="utf-8")
+    assert "module.cluster.eks_cluster_name" in env_out
+
+
+def test_modular_cluster_split_gke_aks(tmp_path):
+    for blueprint, cloud, region, extra, needle in (
+        ("gke-cluster", "gcp", "us-central1", {"gcp_project_id": "billing-proj"}, "var.network_name"),
+        ("aks-cluster", "azure", "eastus", {}, "var.private_subnet_id"),
+    ):
+        cfg = TerraGenConfig.from_dict(
+            {
+                "project": f"demo-mod-{cloud}",
+                "cloud": cloud,
+                "region": region,
+                "blueprint": blueprint,
+                "layout": "modular",
+                "environments": ["dev"],
+                "az_count": 2,
+                **extra,
+            }
+        )
+        out = tmp_path / f"mod-{cloud}"
+        render_project(cfg, out, force=True)
+        assert (out / "modules" / "cluster" / "main.tf").exists()
+        assert not (out / "modules" / "network" / "cluster.tf").exists()
+        body = (out / "modules" / "cluster" / "main.tf").read_text(encoding="utf-8")
+        assert needle in body
+        env_main = (out / "envs" / "dev" / "main.tf").read_text(encoding="utf-8")
+        assert 'module "cluster"' in env_main
+
+
 def test_private_only_aws(tmp_path):
     cfg = TerraGenConfig.from_dict(
         {

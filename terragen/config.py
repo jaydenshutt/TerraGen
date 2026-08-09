@@ -527,6 +527,9 @@ class TerraGenConfig:
                 "private_only": self.private_only,
                 "github_repository": self.github_repository,
                 "module_source": "../../modules/network" if self.is_modular else ".",
+                "cluster_module_source": "../../modules/cluster" if self.is_modular else ".",
+                # True only when rendering modules/cluster (see render.py)
+                "cluster_as_module": False,
                 "tags_json": json.dumps(self.tags, indent=2),
                 "ssh_cidrs_json": json.dumps(self.ssh_cidrs),
                 "public_subnets_json": json.dumps(self.public_subnets),

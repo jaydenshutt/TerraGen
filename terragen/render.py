@@ -113,14 +113,15 @@ def _plan_flat(cfg: TerraGenConfig) -> List[tuple[str, str]]:
 def _plan_modular(cfg: TerraGenConfig) -> List[tuple[str, str]]:
     """
     Modular layout (HashiCorp-style):
-      modules/network/   reusable module: main.tf + variables.tf + outputs.tf
-      envs/<env>/        thin roots: main.tf calls the module
+      modules/network/   VPC/VNet, security, optional hub-spoke
+      modules/cluster/   EKS/GKE/AKS when enable_cluster (separate module)
+      envs/<env>/        thin roots: main.tf calls network (+ cluster)
       bootstrap/         shared state backend
     """
     cloud = cfg.cloud
     mod = "modules/network"
     files: List[tuple[str, str]] = [
-        # Module — standard structure: main.tf, variables.tf, outputs.tf, terraform.tf
+        # Network module — standard structure
         ("layout/module_versions.tf.j2", f"{mod}/terraform.tf"),
         ("variables.tf.j2", f"{mod}/variables.tf"),
         ("outputs.tf.j2", f"{mod}/outputs.tf"),
@@ -132,8 +133,16 @@ def _plan_modular(cfg: TerraGenConfig) -> List[tuple[str, str]]:
     if cfg.enable_flow_logs or cfg.enable_billing_alerts or cfg.enable_guardduty:
         files.append((f"{cloud}/observability.tf.j2", f"{mod}/observability.tf"))
 
+    # Cluster is a sibling module (not nested inside network)
     if cfg.enable_cluster:
-        files.append((f"{cloud}/cluster.tf.j2", f"{mod}/cluster.tf"))
+        cmod = "modules/cluster"
+        files.extend(
+            [
+                ("layout/module_versions.tf.j2", f"{cmod}/terraform.tf"),
+                ("layout/cluster_variables.tf.j2", f"{cmod}/variables.tf"),
+                (f"{cloud}/cluster.tf.j2", f"{cmod}/main.tf"),
+            ]
+        )
 
     if cfg.enable_hub_spoke:
         files.append((f"{cloud}/hub_spoke.tf.j2", f"{mod}/hub_spoke.tf"))
@@ -252,21 +261,32 @@ def render_project(
 
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # Modular: render module once with primary env context, then each env root
+    # Modular: network module (+ optional cluster module), then each env root
     if cfg.is_modular:
-        # Module + shared files use primary config
         primary_ctx = cfg.to_template_context()
         primary_ctx["render_scope"] = "module"
+        primary_ctx["cluster_as_module"] = False
         for tpl_name, rel_path in plan:
-            if rel_path.startswith("envs/"):
+            if rel_path.startswith("envs/") or rel_path.startswith("modules/cluster/"):
                 continue
             _render_one(env, tpl_name, outdir / rel_path, primary_ctx, result)
+
+        if cfg.enable_cluster:
+            cluster_ctx = cfg.to_template_context()
+            cluster_ctx["render_scope"] = "module_cluster"
+            cluster_ctx["cluster_as_module"] = True
+            for tpl_name, rel_path in plan:
+                if not rel_path.startswith("modules/cluster/"):
+                    continue
+                _render_one(env, tpl_name, outdir / rel_path, cluster_ctx, result)
 
         for env_name in cfg.env_list:
             env_cfg = cfg.with_environment(env_name)
             env_ctx = env_cfg.to_template_context()
             env_ctx["render_scope"] = "env"
+            env_ctx["cluster_as_module"] = False
             env_ctx["module_source"] = "../../modules/network"
+            env_ctx["cluster_module_source"] = "../../modules/cluster"
             prefix = f"envs/{env_name}/"
             for tpl_name, rel_path in plan:
                 if not rel_path.startswith(prefix):
@@ -275,6 +295,7 @@ def render_project(
     else:
         ctx = cfg.to_template_context()
         ctx["render_scope"] = "flat"
+        ctx["cluster_as_module"] = False
         for tpl_name, rel_path in plan:
             _render_one(env, tpl_name, outdir / rel_path, ctx, result)
 
