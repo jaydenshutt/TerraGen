@@ -38,6 +38,13 @@ python -m terragen generate
 
 TerraGen explains each question, shows a **summary**, and asks you to confirm before writing files.
 
+**Answers only (no Terraform yet):**
+
+```bash
+python -m terragen init-answers --interactive --out answers.yaml
+python -m terragen generate --answers answers.yaml --out ./my-network --force
+```
+
 ### Option B — Example answers (fastest)
 
 ```bash

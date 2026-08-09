@@ -32,11 +32,26 @@ With no answers file and no major flags, TerraGen runs a guided wizard.
 | Packaging | Backend, bootstrap, CI, policies, OIDC stack |
 | Advanced | IPv6 dual-stack; spoke count if hub-spoke |
 
+## Answers file only (no Terraform)
+
+To capture Q&A answers without generating a project:
+
+```bash
+python -m terragen init-answers --interactive --out answers.yaml
+```
+
+Same wizard and summary; writes only the YAML. Then:
+
+```bash
+python -m terragen generate --answers answers.yaml --out ./my-network --force
+```
+
 ## Tips
 
 - Start with blueprint **`network`** and NAT **`single`** for a balanced first deploy.  
 - Use **`network-private`** if you want no public subnets (AWS gets interface endpoints automatically).  
 - Prefer **`modular`** only if you already know you want multiple env roots.  
-- After generation, re-use `terragen.answers.yaml` for non-interactive runs.
+- After a full `generate`, re-use `terragen.answers.yaml` for non-interactive runs.  
+- Prefer `init-answers --interactive` when you only need the answers file.
 
 See also: [Answers files](answers-file.md), [Blueprints](blueprints.md).

@@ -12,11 +12,32 @@ python -m terragen generate --answers examples/answers-aws.yaml --out ./out --fo
 python -m terragen validate --answers examples/answers-aws.yaml
 ```
 
-Create a starter file:
+### Static sample template
 
 ```bash
 python -m terragen init-answers --out answers.yaml
+python -m terragen init-answers --out answers.yaml --force   # overwrite
 ```
+
+### From the Q&A wizard only (no Terraform project)
+
+```bash
+python -m terragen init-answers --interactive --out answers.yaml
+# short form:
+python -m terragen init-answers -i -o answers.yaml --force
+```
+
+This runs the guided questions, shows a summary, then writes **only** the answers YAML.
+Generate Terraform later:
+
+```bash
+python -m terragen validate --answers answers.yaml
+python -m terragen generate --answers answers.yaml --out ./my-network --force
+```
+
+### Snapshot after a full interactive generate
+
+`python -m terragen generate` (interactive) also writes `terragen.answers.yaml` inside the project folder — a full snapshot of the Q&A for regeneration.
 
 JSON Schema (for editors):
 

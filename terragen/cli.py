@@ -104,19 +104,27 @@ def _ask_int(prompt: str, default: int, min_v: int = 1, max_v: int = 6) -> int:
             _print("  Enter a valid integer")
 
 
-def interactive_config() -> TerraGenConfig:
+def interactive_config(*, answers_only: bool = False) -> TerraGenConfig:
     _print()
     _print("=" * 62)
     _print("  TerraGen — multi-cloud Terraform network generator")
     _print(f"  v{__version__}")
     _print("=" * 62)
     _print()
-    _explain(
-        "I'll ask a series of questions, then write Terraform files for a cloud network.",
-        "Press Enter to accept the default shown in [brackets].",
-        "Ctrl+C cancels without writing files.",
-        "You can re-run later with an answers file for non-interactive use.",
-    )
+    if answers_only:
+        _explain(
+            "I'll ask a series of questions, then write an answers YAML file only",
+            "(no Terraform project). Use it later with: terragen generate -a <file>",
+            "Press Enter to accept the default shown in [brackets].",
+            "Ctrl+C cancels without writing files.",
+        )
+    else:
+        _explain(
+            "I'll ask a series of questions, then write Terraform files for a cloud network.",
+            "Press Enter to accept the default shown in [brackets].",
+            "Ctrl+C cancels without writing files.",
+            "You can re-run later with an answers file for non-interactive use.",
+        )
     wiz = _Wizard(total=18)
 
     # ── Identity ──────────────────────────────────────────────
@@ -467,7 +475,7 @@ def interactive_config() -> TerraGenConfig:
     cfg = TerraGenConfig.from_dict(data)
 
     # ── Summary + confirm ─────────────────────────────────────
-    _section("Summary — review before generating")
+    _section("Summary — review before writing")
     est = cfg.cost_estimate()
     _print(f"  Project:      {cfg.project}")
     _print(f"  Cloud:        {cfg.cloud} / {cfg.region} / env={cfg.environment}")
@@ -495,12 +503,20 @@ def interactive_config() -> TerraGenConfig:
         f"ci={cfg.generate_ci}  oidc={cfg.generate_oidc}"
     )
     _print()
-    if not _ask_bool("Generate files with these settings?", True):
+    confirm = (
+        "Write answers file with these settings?"
+        if answers_only
+        else "Generate files with these settings?"
+    )
+    if not _ask_bool(confirm, True):
         _print("Cancelled — no files written.")
         raise SystemExit(0)
 
     _print()
-    _explain("Generating your Terraform project…")
+    if answers_only:
+        _explain("Writing answers file…")
+    else:
+        _explain("Generating your Terraform project…")
     _print()
     return cfg
 
@@ -886,12 +902,43 @@ def cmd_cost(args: argparse.Namespace) -> int:
 
 
 def cmd_init_answers(args: argparse.Namespace) -> int:
+    """Write answers YAML: static sample or interactive Q&A (no Terraform project)."""
     path = Path(args.out or "answers.yaml")
     if path.exists() and not args.force:
         _err(f"{path} exists. Use --force to overwrite.")
         return 1
+
+    if getattr(args, "interactive", False):
+        try:
+            cfg = interactive_config(answers_only=True)
+        except SystemExit as e:
+            code = e.code if isinstance(e.code, int) else 1
+            return code if code is not None else 1
+
+        result = validate_config(cfg)
+        for w in result.warnings:
+            _err(f"Warning: {w}")
+        if not result.ok:
+            for e in result.errors:
+                _err(f"Error: {e}")
+            return 1
+
+        try:
+            write_answers_example(path, cfg)
+        except Exception as e:
+            _err(f"Failed to write answers file: {e}")
+            return 1
+
+        _print(f"✓ Wrote answers from Q&A: {path}")
+        _print()
+        _print("Next steps:")
+        _print(f"  python -m terragen validate --answers {path}")
+        _print(f"  python -m terragen generate --answers {path} --out ./my-network --force")
+        return 0
+
     write_answers_example(path)
     _print(f"Wrote sample answers file: {path}")
+    _print("  Tip: use --interactive to build this file from the Q&A wizard (no Terraform output).")
     return 0
 
 
@@ -1048,9 +1095,18 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--gb", type=float, help="Estimated monthly egress GB through NAT")
     c.set_defaults(func=cmd_cost)
 
-    ia = sub.add_parser("init-answers", help="Write a sample answers.yaml")
-    ia.add_argument("--out", "-o", default="answers.yaml")
-    ia.add_argument("--force", "-f", action="store_true")
+    ia = sub.add_parser(
+        "init-answers",
+        help="Write an answers YAML (sample template, or interactive Q&A only)",
+    )
+    ia.add_argument("--out", "-o", default="answers.yaml", help="Output path (default: answers.yaml)")
+    ia.add_argument("--force", "-f", action="store_true", help="Overwrite existing file")
+    ia.add_argument(
+        "--interactive",
+        "-i",
+        action="store_true",
+        help="Run the Q&A wizard and write only the answers file (no Terraform project)",
+    )
     ia.set_defaults(func=cmd_init_answers)
 
     ver = sub.add_parser("version", help="Show version")

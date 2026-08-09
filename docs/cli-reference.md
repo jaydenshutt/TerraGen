@@ -22,7 +22,7 @@ terragen <command> [options]
 | `blueprint <id>` | Describe one blueprint |
 | `regions <cloud>` | List curated regions |
 | `cost` | Rough NAT monthly cost estimate |
-| `init-answers` | Write a sample answers YAML |
+| `init-answers` | Write answers YAML (sample **or** interactive Q&A only) |
 | `version` | Show version |
 
 ## `generate` flags (common)
@@ -75,11 +75,21 @@ terragen <command> [options]
 | `--auto-approve` | Apply without prompt |
 | `--dry-run` | Print intended commands |
 
+## `init-answers` flags
+
+| Flag | Meaning |
+|------|---------|
+| `-o` / `--out` | Output path (default `answers.yaml`) |
+| `-f` / `--force` | Overwrite existing file |
+| `-i` / `--interactive` | Run Q&A wizard; write answers only (no Terraform project) |
+
 ## Examples
 
 ```bash
 python -m terragen doctor
 python -m terragen blueprints
+python -m terragen init-answers -i -o answers.yaml          # Q&A → answers only
+python -m terragen generate -a answers.yaml -o ./n --force
 python -m terragen generate -a examples/answers-aws.yaml -o ./n --force --validate
 python -m terragen import -i examples/inventory-aws-sample.json -o ./imp
 python -m terragen cost --cloud aws --nat-mode per_az --az-count 3
